@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -10,17 +11,38 @@ public class PlayerController : MonoBehaviour
     private Animator animator;
     public GameObject sprintingSfx;
     public GameObject quickAttackParticleFX;
+    public GameObject onHealingParticleFX;
     private bool Attacking = false;
     public GameObject walkingSfx;
     public GameObject quickAttackSfx;
+    public GameObject HealingPotionObject;
     void Start()
     {
         // Get the Animator component attached to the player
         animator = GetComponent<Animator>();
-    }
 
+    }
+    IEnumerator DoSomethingAfter4Seconds()
+    {
+        yield return new WaitForSeconds(4);
+        onHealingParticleFX.SetActive(false);
+    }
+    void OnCollisionEnter(Collision collision)
+    {
+        // Check if the object we collided with has a specific tag (optional)
+        if (collision.gameObject.CompareTag("HealingPotion"))
+        {
+            StartCoroutine(DoSomethingAfter4Seconds());
+            onHealingParticleFX.SetActive(true);
+            HealingPotionObject.SetActive(false);
+        }
+
+    }
     void Update()
     {
+
+
+
         if (Input.GetKeyDown(KeyCode.Q))
         {
             quickAttackParticleFX.SetActive(true);
@@ -28,6 +50,9 @@ public class PlayerController : MonoBehaviour
             Attacking = true;
             animator.SetBool("isRunning", false);
             animator.SetBool("isWalking", false);
+
+
+
             Invoke("EndAttack", 1f);
             quickAttackSfx.SetActive(true);
 
