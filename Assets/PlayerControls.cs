@@ -13,50 +13,49 @@ public class PlayerController : MonoBehaviour
     public GameObject quickAttackParticleFX;
     public GameObject onHealingParticleFX;
     private bool Attacking = false;
+    private bool quickAttackCooldown = false;
     public GameObject walkingSfx;
     public GameObject quickAttackSfx;
     public GameObject HealingPotionObject;
+    public Timer quickAttackTimer; // Reference to the Timer script
+    private Coroutine quickAttackCooldownCoroutine;
+
     void Start()
     {
+        quickAttackCooldown = true;
+        StartCoroutine(QuickAttackCoolDown());
         // Get the Animator component attached to the player
         animator = GetComponent<Animator>();
-
+        if (quickAttackTimer != null)
+        {
+            quickAttackTimer.onTimerEnd.AddListener(OnQuickAttackCooldownEnd);
+        }
     }
-    IEnumerator DoSomethingAfter4Seconds()
+
+    IEnumerator TurnOffHealingParticleAuraIn4Sec()
     {
         yield return new WaitForSeconds(4);
         onHealingParticleFX.SetActive(false);
     }
+
     void OnCollisionEnter(Collision collision)
     {
         // Check if the object we collided with has a specific tag (optional)
         if (collision.gameObject.CompareTag("HealingPotion"))
         {
-            StartCoroutine(DoSomethingAfter4Seconds());
+            StartCoroutine(TurnOffHealingParticleAuraIn4Sec());
             onHealingParticleFX.SetActive(true);
             HealingPotionObject.SetActive(false);
         }
-
     }
+
     void Update()
     {
-
-
-
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (Input.GetKeyDown(KeyCode.Q) && !quickAttackCooldown)
         {
-            quickAttackParticleFX.SetActive(true);
-            animator.SetTrigger("QuickAttack");
-            Attacking = true;
-            animator.SetBool("isRunning", false);
-            animator.SetBool("isWalking", false);
-
-
-
-            Invoke("EndAttack", 1f);
-            quickAttackSfx.SetActive(true);
-
+            PerformQuickAttack();
         }
+
         // Get input from WASD keys
         float moveHorizontal = Input.GetAxis("Horizontal");
         float moveVertical = Input.GetAxis("Vertical");
@@ -100,7 +99,6 @@ public class PlayerController : MonoBehaviour
             else
             {
                 sprintingSfx.SetActive(false);
-
                 currentSpeed = moveSpeed;
             }
 
@@ -119,11 +117,49 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
+
+    void PerformQuickAttack()
+    {
+        quickAttackCooldown = true;
+        quickAttackParticleFX.SetActive(true);
+        animator.SetTrigger("QuickAttack");
+        Attacking = true;
+        animator.SetBool("isRunning", false);
+        animator.SetBool("isWalking", false);
+        Invoke("EndAttack", 1f);
+        quickAttackSfx.SetActive(true);
+
+        if (quickAttackCooldownCoroutine != null)
+        {
+            StopCoroutine(quickAttackCooldownCoroutine);
+        }
+        quickAttackCooldownCoroutine = StartCoroutine(QuickAttackCoolDown());
+    }
+
+    IEnumerator QuickAttackCoolDown()
+    {
+        if (quickAttackTimer != null)
+        {
+            quickAttackTimer.hours = 0;
+            quickAttackTimer.minutes = 0;
+            quickAttackTimer.seconds = 2; // Set cooldown duration
+            quickAttackTimer.StartTimer();
+        }
+
+        yield return new WaitForSeconds(2); // Wait for cooldown duration
+
+        quickAttackCooldown = false;
+    }
+
+    void OnQuickAttackCooldownEnd()
+    {
+        quickAttackCooldown = false;
+    }
+
     public void EndAttack()
     {
         quickAttackParticleFX.SetActive(false);
         Attacking = false;
         quickAttackSfx.SetActive(false);
-
     }
 }
