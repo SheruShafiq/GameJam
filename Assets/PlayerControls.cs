@@ -8,7 +8,7 @@ public class PlayerController : MonoBehaviour
     public float acceleration = 5f; // Adjust this value to control how quickly the speed increases
     private float currentSpeed;
     private Animator animator;
-
+    private bool Attacking = false;
     void Start()
     {
         // Get the Animator component attached to the player
@@ -17,53 +17,67 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            animator.SetTrigger("QuickAttack");
+            Attacking = true;
+            animator.SetBool("isRunning", false);
+            animator.SetBool("isWalking", false);
+            Invoke("EndAttack", 1f);
+        }
         // Get input from WASD keys
         float moveHorizontal = Input.GetAxis("Horizontal");
         float moveVertical = Input.GetAxis("Vertical");
-
-        // Calculate movement direction
-        Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
-
-        // Normalize the movement vector to ensure consistent movement speed in all directions
-        if (movement.magnitude > 1)
+        if (!Attacking)
         {
-            movement.Normalize();
-        }
+            // Calculate movement direction
+            Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
 
-        // Determine if the player is moving
-        bool isMoving = movement.magnitude > 0;
-
-        // Check if the sprint key (Left Shift) is pressed
-        bool isSprinting = Input.GetKey(KeyCode.LeftShift) && isMoving;
-
-        if (isSprinting)
-        {
-            if (currentSpeed < sprintSpeed)
+            // Normalize the movement vector to ensure consistent movement speed in all directions
+            if (movement.magnitude > 1)
             {
-                currentSpeed += acceleration * Time.deltaTime; // Gradually increase speed
-                if (currentSpeed > sprintSpeed)
+                movement.Normalize();
+            }
+
+            // Determine if the player is moving
+            bool isMoving = movement.magnitude > 0;
+
+            // Check if the sprint key (Left Shift) is pressed
+            bool isSprinting = Input.GetKey(KeyCode.LeftShift) && isMoving;
+
+            if (isSprinting)
+            {
+                if (currentSpeed < sprintSpeed)
                 {
-                    currentSpeed = sprintSpeed; // Ensure currentSpeed does not exceed sprintSpeed
+                    currentSpeed += acceleration * Time.deltaTime; // Gradually increase speed
+                    if (currentSpeed > sprintSpeed)
+                    {
+                        currentSpeed = sprintSpeed; // Ensure currentSpeed does not exceed sprintSpeed
+                    }
                 }
             }
-        }
-        else
-        {
-            currentSpeed = moveSpeed;
-        }
+            else
+            {
+                currentSpeed = moveSpeed;
+            }
 
-        // Set animation parameters
-        animator.SetBool("isRunning", isSprinting);
-        animator.SetBool("isWalking", isMoving && !isSprinting);
+            // Set animation parameters
+            animator.SetBool("isRunning", isSprinting);
+            animator.SetBool("isWalking", isMoving && !isSprinting);
 
-        // Move the player
-        transform.Translate(currentSpeed * Time.deltaTime * movement, Space.World);
+            // Move the player
+            transform.Translate(currentSpeed * Time.deltaTime * movement, Space.World);
 
-        // If there is some movement, rotate the player to face the movement direction
-        if (movement != Vector3.zero)
-        {
-            Quaternion toRotation = Quaternion.LookRotation(movement, Vector3.up);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, turnSpeed * Time.deltaTime);
+            // If there is some movement, rotate the player to face the movement direction
+            if (movement != Vector3.zero)
+            {
+                Quaternion toRotation = Quaternion.LookRotation(movement, Vector3.up);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, turnSpeed * Time.deltaTime);
+            }
         }
+    }
+    public void EndAttack()
+    {
+        Attacking = false;
     }
 }
