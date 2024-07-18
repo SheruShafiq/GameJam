@@ -5,7 +5,7 @@ public class PlayerController : MonoBehaviour
     public float moveSpeed = 5f;       // Speed of movement
     public float sprintSpeed = 10f;    // Speed of movement while sprinting
     public float turnSpeed = 300f;     // Speed of turning
-
+    public float acceleration = 5f; // Adjust this value to control how quickly the speed increases
     private float currentSpeed;
     private Animator animator;
 
@@ -38,7 +38,14 @@ public class PlayerController : MonoBehaviour
 
         if (isSprinting)
         {
-            currentSpeed = sprintSpeed;
+            if (currentSpeed < sprintSpeed)
+            {
+                currentSpeed += acceleration * Time.deltaTime; // Gradually increase speed
+                if (currentSpeed > sprintSpeed)
+                {
+                    currentSpeed = sprintSpeed; // Ensure currentSpeed does not exceed sprintSpeed
+                }
+            }
         }
         else
         {
