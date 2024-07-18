@@ -8,7 +8,11 @@ public class PlayerController : MonoBehaviour
     public float acceleration = 5f; // Adjust this value to control how quickly the speed increases
     private float currentSpeed;
     private Animator animator;
+    public GameObject sprintingSfx;
+    public GameObject quickAttackParticleFX;
     private bool Attacking = false;
+    public GameObject walkingSfx;
+    public GameObject quickAttackSfx;
     void Start()
     {
         // Get the Animator component attached to the player
@@ -19,11 +23,14 @@ public class PlayerController : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Q))
         {
+            quickAttackParticleFX.SetActive(true);
             animator.SetTrigger("QuickAttack");
             Attacking = true;
             animator.SetBool("isRunning", false);
             animator.SetBool("isWalking", false);
             Invoke("EndAttack", 1f);
+            quickAttackSfx.SetActive(true);
+
         }
         // Get input from WASD keys
         float moveHorizontal = Input.GetAxis("Horizontal");
@@ -44,9 +51,18 @@ public class PlayerController : MonoBehaviour
 
             // Check if the sprint key (Left Shift) is pressed
             bool isSprinting = Input.GetKey(KeyCode.LeftShift) && isMoving;
-
+            if (isMoving)
+            {
+                walkingSfx.SetActive(true);
+            }
+            else
+            {
+                walkingSfx.SetActive(false);
+            }
             if (isSprinting)
             {
+                walkingSfx.SetActive(false);
+                sprintingSfx.SetActive(true);
                 if (currentSpeed < sprintSpeed)
                 {
                     currentSpeed += acceleration * Time.deltaTime; // Gradually increase speed
@@ -58,6 +74,8 @@ public class PlayerController : MonoBehaviour
             }
             else
             {
+                sprintingSfx.SetActive(false);
+
                 currentSpeed = moveSpeed;
             }
 
@@ -78,6 +96,9 @@ public class PlayerController : MonoBehaviour
     }
     public void EndAttack()
     {
+        quickAttackParticleFX.SetActive(false);
         Attacking = false;
+        quickAttackSfx.SetActive(false);
+
     }
 }
