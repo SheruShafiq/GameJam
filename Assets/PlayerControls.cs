@@ -17,6 +17,7 @@ public class PlayerController : MonoBehaviour
     public GameObject walkingSfx;
     public GameObject quickAttackSfx;
     public GameObject HealingPotionObject;
+    public HPBar hpBar; // Reference to the HPBar script
     public Timer quickAttackTimer; // Reference to the Timer script
     private Coroutine quickAttackCooldownCoroutine;
 
@@ -38,17 +39,25 @@ public class PlayerController : MonoBehaviour
         onHealingParticleFX.SetActive(false);
     }
 
-    void OnCollisionEnter(Collision collision)
+void OnCollisionEnter(Collision collision)
+{
+    Debug.Log("Collided with: " + collision.gameObject.name);
+    Debug.Log("Collided with tag: " + collision.gameObject.tag);
+
+    if (collision.gameObject.CompareTag("HealingPotion"))
     {
-        // Check if the object we collided with has a specific tag (optional)
-        if (collision.gameObject.CompareTag("HealingPotion"))
-        {
-            StartCoroutine(TurnOffHealingParticleAuraIn4Sec());
-            onHealingParticleFX.SetActive(true);
-            HealingPotionObject.SetActive(false);
-        }
+        StartCoroutine(TurnOffHealingParticleAuraIn4Sec());
+        onHealingParticleFX.SetActive(true);
+        HealingPotionObject.SetActive(false);
+        hpBar.IncreaseHP(20); // Heal the player by 20 points
     }
 
+    if (collision.gameObject.CompareTag("Ghost"))
+    {
+        Debug.Log("Player collided with an enemy!");
+        hpBar.DecreaseHP(10); // Decrease the player's HP by 10 points
+    }
+}
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Q) && !quickAttackCooldown)
