@@ -7864,7 +7864,7 @@ MonoBehaviour:
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
-  m_SoftShadowQuality: 0
+  m_SoftShadowQuality: 3
 --- !u!108 &1133248104
 Light:
   m_ObjectHideFlags: 0
@@ -7888,7 +7888,7 @@ Light:
     m_Strength: 1
     m_Bias: 0.05
     m_NormalBias: 0
-    m_NearPlane: 0.2
+    m_NearPlane: 10
     m_CullingMatrixOverride:
       e00: 1
       e01: 0
@@ -10765,7 +10765,7 @@ MonoBehaviour:
   moveSpeed: 5
   sprintSpeed: 10
   turnSpeed: 1000
-  acceleration: 150
+  acceleration: 16
   sprintingSfx: {fileID: 9444337}
   quickAttackParticleFX: {fileID: 2194328742793796662}
   onHealingParticleFX: {fileID: 346812343}
