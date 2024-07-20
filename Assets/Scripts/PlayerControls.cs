@@ -3,13 +3,11 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    [Tooltip("If checked, runs the timer on play")]
-    public float moveSpeed = 5f;       // Speed of movement
-    
-    public float sprintSpeed = 10f;  
-      // Speed of movement while sprinting
-    public float turnSpeed = 300f;     // Speed of turning
-    public float acceleration = 5f; // Adjust this value to control how quickly the speed increases
+    public float moveSpeed = 5f;
+    public float knockBackSpeed = 5.0f;
+    public float sprintSpeed = 10f;
+    public float turnSpeed = 300f;
+    public float acceleration = 5f;
     private float currentSpeed;
     private Animator animator;
     public GameObject sprintingSfx;
@@ -20,20 +18,23 @@ public class PlayerController : MonoBehaviour
     public GameObject walkingSfx;
     public GameObject quickAttackSfx;
     public GameObject HealingPotionObject;
-    public HPBar hpBar; // Reference to the HPBar script
-    public Timer quickAttackTimer; // Reference to the Timer script
+    public HPBar hpBar;
+    public Timer quickAttackTimer;
     private Coroutine quickAttackCooldownCoroutine;
+
+    public GameManager gameManager;
 
     void Start()
     {
         quickAttackCooldown = true;
         StartCoroutine(QuickAttackCoolDown());
-        // Get the Animator component attached to the player
         animator = GetComponent<Animator>();
         if (quickAttackTimer != null)
         {
             quickAttackTimer.onTimerEnd.AddListener(OnQuickAttackCooldownEnd);
         }
+
+
     }
 
     IEnumerator TurnOffHealingParticleAuraIn4Sec()
@@ -42,50 +43,61 @@ public class PlayerController : MonoBehaviour
         onHealingParticleFX.SetActive(false);
     }
 
-void OnCollisionEnter(Collision collision)
-{
-    Debug.Log("Collided with: " + collision.gameObject.name);
-    Debug.Log("Collided with tag: " + collision.gameObject.tag);
-
-    if (collision.gameObject.CompareTag("HealingPotion"))
+    void OnCollisionEnter(Collision collision)
     {
-        StartCoroutine(TurnOffHealingParticleAuraIn4Sec());
-        onHealingParticleFX.SetActive(true);
-        HealingPotionObject.SetActive(false);
-        hpBar.IncreaseHP(20); // Heal the player by 20 points
+        Debug.Log("Collided with: " + collision.gameObject.name);
+        Debug.Log("Collided with tag: " + collision.gameObject.tag);
+
+        if (collision.gameObject.CompareTag("HealingPotion"))
+        {
+            StartCoroutine(TurnOffHealingParticleAuraIn4Sec());
+            onHealingParticleFX.SetActive(true);
+            HealingPotionObject.SetActive(false);
+            hpBar.IncreaseHP(20); // Heal the player by 20 points
+        }
+
+        if (collision.gameObject.CompareTag("Enemy"))
+        {
+            Vector3 targetPosition = new Vector3(transform.position.x - 5, transform.position.y, transform.position.z - 5);
+            transform.position = Vector3.MoveTowards(transform.position, targetPosition, knockBackSpeed * Time.deltaTime);
+            Debug.Log("Player collided with an enemy!");
+            hpBar.DecreaseHP(10); // Decrease the player's HP by 10 points
+            animator.SetTrigger("isHit");
+            if (hpBar.currentHP <= 0)
+            {
+                animator.SetBool("isDead", true);
+                if (gameManager != null)
+                {
+                    gameManager.isPlayerDead = true;
+                }
+            }
+        }
     }
 
-    if (collision.gameObject.CompareTag("Ghost"))
-    {
-        Debug.Log("Player collided with an enemy!");
-        hpBar.DecreaseHP(10); // Decrease the player's HP by 10 points
-    }
-}
     void Update()
     {
+        if (hpBar.currentHP <= 0)
+        {
+            return; // Prevent movement if HP is 0 or less
+        }
+
         if (Input.GetKeyDown(KeyCode.Q) && !quickAttackCooldown)
         {
             PerformQuickAttack();
         }
 
-        // Get input from WASD keys
         float moveHorizontal = Input.GetAxis("Horizontal");
         float moveVertical = Input.GetAxis("Vertical");
         if (!Attacking)
         {
-            // Calculate movement direction
             Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
 
-            // Normalize the movement vector to ensure consistent movement speed in all directions
             if (movement.magnitude > 1)
             {
                 movement.Normalize();
             }
 
-            // Determine if the player is moving
             bool isMoving = movement.magnitude > 0;
-
-            // Check if the sprint key (Left Shift) is pressed
             bool isSprinting = Input.GetKey(KeyCode.LeftShift) && isMoving;
             if (isMoving)
             {
@@ -101,10 +113,10 @@ void OnCollisionEnter(Collision collision)
                 sprintingSfx.SetActive(true);
                 if (currentSpeed < sprintSpeed)
                 {
-                    currentSpeed += acceleration * Time.deltaTime; // Gradually increase speed
+                    currentSpeed += acceleration * Time.deltaTime;
                     if (currentSpeed > sprintSpeed)
                     {
-                        currentSpeed = sprintSpeed; // Ensure currentSpeed does not exceed sprintSpeed
+                        currentSpeed = sprintSpeed;
                     }
                 }
             }
@@ -114,14 +126,11 @@ void OnCollisionEnter(Collision collision)
                 currentSpeed = moveSpeed;
             }
 
-            // Set animation parameters
             animator.SetBool("isRunning", isSprinting);
             animator.SetBool("isWalking", isMoving && !isSprinting);
 
-            // Move the player
             transform.Translate(currentSpeed * Time.deltaTime * movement, Space.World);
 
-            // If there is some movement, rotate the player to face the movement direction
             if (movement != Vector3.zero)
             {
                 Quaternion toRotation = Quaternion.LookRotation(movement, Vector3.up);
@@ -154,11 +163,11 @@ void OnCollisionEnter(Collision collision)
         {
             quickAttackTimer.hours = 0;
             quickAttackTimer.minutes = 0;
-            quickAttackTimer.seconds = 2; // Set cooldown duration
+            quickAttackTimer.seconds = 2;
             quickAttackTimer.StartTimer();
         }
 
-        yield return new WaitForSeconds(2); // Wait for cooldown duration
+        yield return new WaitForSeconds(2);
 
         quickAttackCooldown = false;
     }

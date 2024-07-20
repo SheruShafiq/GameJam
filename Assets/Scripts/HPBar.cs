@@ -10,7 +10,7 @@ public class HPBar : MonoBehaviour
 
     [Range(0, 100)]
     public int maxHP = 100;
-    private int currentHP;
+    public int currentHP;
 
     public enum OutputType
     {
