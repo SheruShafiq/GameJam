@@ -52,7 +52,7 @@ public class PlayerController : MonoBehaviour
         {
             StartCoroutine(TurnOffHealingParticleAuraIn4Sec());
             onHealingParticleFX.SetActive(true);
-            HealingPotionObject.SetActive(false);
+            Destroy(collision.gameObject);
             hpBar.IncreaseHP(20); // Heal the player by 20 points
         }
 
@@ -66,6 +66,8 @@ public class PlayerController : MonoBehaviour
             if (hpBar.currentHP <= 0)
             {
                 animator.SetBool("isDead", true);
+                  walkingSfx.SetActive(false);
+                sprintingSfx.SetActive(false);
                 if (gameManager != null)
                 {
                     gameManager.isPlayerDead = true;

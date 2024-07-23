@@ -94,20 +94,21 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    void OnCollisionEnter(Collision collision)
+   void OnCollisionEnter(Collision collision)
+{
+    if (collision.gameObject.CompareTag("Player"))
     {
-        if (collision.gameObject.CompareTag("Player"))
-        {
-            isCollidingWithPlayer = true;
-        }
-
-        if (collision.gameObject.CompareTag("QuickAttackProjectile"))
-        {
-            TakeDamage(20);
-            // Optionally destroy the projectile
-            Destroy(collision.gameObject);
-        }
+        isCollidingWithPlayer = true;
     }
+
+    if (collision.gameObject.CompareTag("QuickAttackProjectile"))
+    {
+        TakeDamage(20);
+        // Destroy the entity this script is attached to
+        Destroy(gameObject);
+    }
+}
+
 
     void OnCollisionExit(Collision collision)
     {
