@@ -4,7 +4,6 @@ using UnityEngine.UI;
 
 public class Enemy : MonoBehaviour
 {
-    public GameManager gameManager;
     private bool stopFollowing;
     public Animator animator;
     public int maxHP = 10;
@@ -12,17 +11,21 @@ public class Enemy : MonoBehaviour
     public Slider hpSlider;
     public GameObject deathEffect; // Optional: A particle effect or animation on death
 
-    public Transform player;
     public float followSpeed = 30f; // Speed at which the enemy follows the player
     public int damagePerSecond = 10; // Damage inflicted per second while in collision
     public float separationDistance = 2f; // Minimum distance between enemies to avoid merging
     public float separationForce = 5f; // Force applied to separate enemies
-
+private Transform player;
+    private GameManager gameManager;
     private bool isCollidingWithPlayer = false;
+    private GameObject gameManagerObject;
     private Rigidbody rb; // Add a reference to the Rigidbody
 
     void Start()
     {
+        player = GameObject.FindGameObjectWithTag("Player").transform;
+        gameManagerObject = GameObject.FindGameObjectWithTag("GameManager");
+        gameManager = gameManagerObject.GetComponent<GameManager>();
         currentHP = maxHP;
         if (hpSlider != null)
         {
