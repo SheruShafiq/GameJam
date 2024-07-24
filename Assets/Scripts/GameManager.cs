@@ -39,7 +39,7 @@ public class GameManager : MonoBehaviour
         Debug.Log("Spawning Enemies: " + enemySpawnCount);
         for (int i = 0; i < enemySpawnCount; i++)
         {
-            Vector3 spawnPosition = GetRandomSpawnPosition(enemySpawnRangeX, enemySpawnRangeZ);
+            Vector3 spawnPosition = GetValidSpawnPosition(enemySpawnRangeX, enemySpawnRangeZ);
             Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
         }
     }
@@ -64,6 +64,17 @@ public class GameManager : MonoBehaviour
         );
     }
 
+    private Vector3 GetValidSpawnPosition(float rangeX, float rangeZ)
+    {
+        Vector3 spawnPosition;
+        do
+        {
+            spawnPosition = GetRandomSpawnPosition(rangeX, rangeZ);
+        } while (Mathf.Abs(spawnPosition.x - playerTransform.position.x) < 20 || Mathf.Abs(spawnPosition.z - playerTransform.position.z) < 20);
+
+        return spawnPosition;
+    }
+
     void Update()
     {
         if (isPlayerDead)
@@ -86,7 +97,7 @@ public class GameManager : MonoBehaviour
     {
         yield return new WaitForSeconds(5);
         levelupUI.SetActive(false);
-        currentLvl++;
+        currentLvl++; 
         Debug.Log("Level Up: " + currentLvl);
         SpawnEnemies();
         SpawnPotions();

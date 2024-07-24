@@ -135,16 +135,17 @@ private Transform player;
         }
     }
 
-    void Die()
+void Die()
+{
+    Debug.Log("Enemy died!");
+    if (deathEffect != null)
     {
-        Debug.Log("Enemy died!");
-        if (deathEffect != null)
-        {
-            Instantiate(deathEffect, transform.position, transform.rotation);
-        }
-
-        Destroy(gameObject);
+        GameObject effect = Instantiate(deathEffect, transform.position, transform.rotation);
+        Destroy(effect, 2f); // Destroy the deathEffect after 2 seconds
     }
+
+    Destroy(gameObject);
+}
 
     void FloatAwayFromPlayer()
     {
