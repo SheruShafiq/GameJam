@@ -6,25 +6,26 @@ public class GameManager : MonoBehaviour
 {
     [Header("Prefabs")]
     public GameObject levelupUI;
-    public  bool isPlayerDead = false;
+    public bool isPlayerDead = false;
     public GameObject defaultHud;
-    public GameObject deathHud; // The enemy prefab
-    public GameObject enemyPrefab; // The enemy prefab
-    public GameObject healingPotionPrefab; // The healing potion prefab
+    public GameObject deathHud;
+    public GameObject enemyPrefab;
+    public GameObject healingPotionPrefab;
 
     [Header("Player Settings")]
-    public Transform playerTransform; // The player's transform
+    public Transform playerTransform;
 
     [Header("Spawn Settings")]
-    public float enemySpawnRangeX = 20f; // Range for spawning enemies on the X axis
-    public float enemySpawnRangeZ = 20f; // Range for spawning enemies on the Z axis
-    public int enemyBaseSpawnCount = 10; // Base number of enemies to spawn
+    public float enemySpawnRangeX = 20f;
+    public float enemySpawnRangeZ = 20f;
+    public int enemyBaseSpawnCount = 10;
 
-    public float potionSpawnRangeX = 20f; // Range for spawning potions on the X axis
-    public float potionSpawnRangeZ = 20f; // Range for spawning potions on the Z axis
-    public int potionBaseSpawnCount = 1; // Base number of potions to spawn
+    public float potionSpawnRangeX = 20f;
+    public float potionSpawnRangeZ = 20f;
+    public int potionBaseSpawnCount = 1;
 
     private int currentLvl = 1;
+    private bool isSpawningEnemies = false; // Flag to control spawning
 
     void Start()
     {
@@ -32,10 +33,10 @@ public class GameManager : MonoBehaviour
         SpawnPotions();
     }
 
-    // Method to spawn enemies in random locations around the player
     private void SpawnEnemies()
     {
-        int enemySpawnCount = enemyBaseSpawnCount + (currentLvl - 1) * 10;
+        int enemySpawnCount = enemyBaseSpawnCount + currentLvl * 10;
+        Debug.Log("Spawning Enemies: " + enemySpawnCount);
         for (int i = 0; i < enemySpawnCount; i++)
         {
             Vector3 spawnPosition = GetRandomSpawnPosition(enemySpawnRangeX, enemySpawnRangeZ);
@@ -43,10 +44,10 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Method to spawn healing potions in random locations around the player
     private void SpawnPotions()
     {
-        int potionSpawnCount = potionBaseSpawnCount + (currentLvl - 1);
+        int potionSpawnCount = potionBaseSpawnCount + currentLvl;
+        Debug.Log("Spawning Potions: " + potionSpawnCount);
         for (int i = 0; i < potionSpawnCount; i++)
         {
             Vector3 spawnPosition = GetRandomSpawnPosition(potionSpawnRangeX, potionSpawnRangeZ);
@@ -54,7 +55,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Method to get a random spawn position around the player
     private Vector3 GetRandomSpawnPosition(float rangeX, float rangeZ)
     {
         return new Vector3(
@@ -71,20 +71,12 @@ public class GameManager : MonoBehaviour
             deathHud.SetActive(true);
             defaultHud.SetActive(false);
             StartCoroutine(RestartGame());
-
-            // Handle game over logic here
         }
-        CheckEnemies();
-    }
 
-    void CheckEnemies()
-    {
-        // Find all game objects with the tag "Enemy"
-        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
-
-        // Check if the length of the array is zero
-        if (enemies.Length == 0)
+        // Check if there are no enemies and if we are not currently spawning enemies
+        if (GameObject.FindGameObjectsWithTag("Enemy").Length == 0 && !isSpawningEnemies)
         {
+            isSpawningEnemies = true;
             levelupUI.SetActive(true);
             StartCoroutine(AllEnemiesKilled());
         }
@@ -95,8 +87,12 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(5);
         levelupUI.SetActive(false);
         currentLvl++;
+        Debug.Log("Level Up: " + currentLvl);
         SpawnEnemies();
         SpawnPotions();
+        isSpawningEnemies = false; // Reset the flag after spawning
+        Debug.Log("EnemySpawn Count: " + (enemyBaseSpawnCount + (currentLvl - 1) * 10));
+        Debug.Log("Potion Spawn Count: " + (potionBaseSpawnCount + (currentLvl - 1)));
     }
 
     IEnumerator RestartGame()

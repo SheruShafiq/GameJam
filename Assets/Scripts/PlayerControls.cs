@@ -65,9 +65,16 @@ public class PlayerController : MonoBehaviour
             animator.SetTrigger("isHit");
             if (hpBar.currentHP <= 0)
             {
+                quickAttackParticleFX.SetActive(false);
+                quickAttackSfx.SetActive(false);
                 animator.SetBool("isDead", true);
                   walkingSfx.SetActive(false);
                 sprintingSfx.SetActive(false);
+                if (quickAttackCooldownCoroutine != null)
+                {
+                    StopCoroutine(quickAttackCooldownCoroutine);
+                }
+                
                 if (gameManager != null)
                 {
                     gameManager.isPlayerDead = true;
