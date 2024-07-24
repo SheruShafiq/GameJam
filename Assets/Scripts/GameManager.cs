@@ -39,7 +39,8 @@ public class GameManager : MonoBehaviour
         Debug.Log("Spawning Enemies: " + enemySpawnCount);
         for (int i = 0; i < enemySpawnCount; i++)
         {
-            Vector3 spawnPosition = GetValidSpawnPosition(enemySpawnRangeX, enemySpawnRangeZ);
+                        Vector3 spawnPosition = GetRandomSpawnPosition(enemySpawnRangeX, enemySpawnRangeZ);
+
             Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
         }
     }
@@ -105,7 +106,7 @@ public class GameManager : MonoBehaviour
         Debug.Log("EnemySpawn Count: " + (enemyBaseSpawnCount + (currentLvl - 1) * 10));
         Debug.Log("Potion Spawn Count: " + (potionBaseSpawnCount + (currentLvl - 1)));
     }
-
+ 
     IEnumerator RestartGame()
     {
         yield return new WaitForSeconds(2);
