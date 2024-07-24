@@ -4,21 +4,22 @@ using UnityEngine;
 public class EnvironmentSpawner : MonoBehaviour
 {
     [SerializeField]
-    private GameObject[] objectsToSpawn; // Array of objects to spawn
+    public GameObject[] objectsToSpawn; // Array of objects to spawn
     [SerializeField]
-    private float spawnRadius = 35f; // Radius within which objects will be spawned around the player
+    public float spawnRadius = 35f; // Radius within which objects will be spawned around the player
     [SerializeField]
-    private float despawnDistance = 55f; // Distance at which objects will be despawned
+    public float despawnDistance = 10f; // Distance at which objects will be despawned on both X and Z axes
     [SerializeField]
-    private int poolSize = 250; // Maximum number of objects to pool
+    public int poolSize = 250; // Maximum number of objects to pool
     [SerializeField]
-    private int maxSpawnPerFrame = 15; // Maximum number of objects to spawn per frame
+    public int maxSpawnPerFrame = 15; // Maximum number of objects to spawn per frame
     [SerializeField]
-    private float minDistanceBetweenObjects = 2f; // Minimum distance between spawned objects
+    public float minDistanceBetweenObjects = 2f; // Minimum distance between spawned objects
 
-    private Transform playerTransform;
-    private HashSet<GameObject> activeObjects = new HashSet<GameObject>();
-    private Queue<GameObject> objectPool = new Queue<GameObject>();
+    public Transform playerTransform;
+    public Camera mainCamera;
+    public HashSet<GameObject> activeObjects = new HashSet<GameObject>();
+    public Queue<GameObject> objectPool = new Queue<GameObject>();
 
     void Start()
     {
@@ -80,8 +81,16 @@ public class EnvironmentSpawner : MonoBehaviour
     private Vector3 GetRandomSpawnPosition()
     {
         Vector3 randomDirection = Random.insideUnitSphere * spawnRadius;
-        randomDirection.y = (float) -0.2; // Ensure the objects are placed on the ground
-        return playerTransform.position + randomDirection;
+        randomDirection.y = -0.2f; // Ensure the objects are placed on the ground
+        Vector3 spawnPosition = playerTransform.position + randomDirection;
+
+        // Adjust spawn position to be ahead of the player based on camera direction
+        Vector3 cameraForward = mainCamera.transform.forward;
+        cameraForward.y = 0; // Ignore vertical direction
+        cameraForward.Normalize();
+
+        spawnPosition += cameraForward * spawnRadius * 0.5f;
+        return spawnPosition;
     }
 
     private bool IsPositionValid(Vector3 position)
@@ -109,7 +118,8 @@ public class EnvironmentSpawner : MonoBehaviour
 
         foreach (var obj in activeObjects)
         {
-            if (Vector3.Distance(playerTransform.position, obj.transform.position) > despawnDistance)
+            if (Mathf.Abs(playerTransform.position.x - obj.transform.position.x) > despawnDistance ||
+                Mathf.Abs(playerTransform.position.z - obj.transform.position.z) > despawnDistance)
             {
                 objectsToDespawn.Add(obj);
             }
