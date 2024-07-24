@@ -81,7 +81,7 @@ public class EnvironmentSpawner : MonoBehaviour
     private Vector3 GetRandomSpawnPosition()
     {
         Vector3 randomDirection = Random.insideUnitSphere * spawnRadius;
-        randomDirection.y = -0.2f; // Ensure the objects are placed on the ground
+        randomDirection.y = 0; // Ensure the objects are placed at y = 0
         Vector3 spawnPosition = playerTransform.position + randomDirection;
 
         // Adjust spawn position to be ahead of the player based on camera direction
@@ -90,6 +90,7 @@ public class EnvironmentSpawner : MonoBehaviour
         cameraForward.Normalize();
 
         spawnPosition += cameraForward * spawnRadius * 0.5f;
+        spawnPosition.y = 0; // Ensure the objects are placed at y = 0
         return spawnPosition;
     }
 
