@@ -25,10 +25,7 @@ public class PlayerController : MonoBehaviour
     private Coroutine quickAttackCooldownCoroutine;
     public GameObject throwableObject; // The object to be thrown
     public GameObject replacementObject; // The object to replace the thrown object
-    public float maxThrowForce = 100f;
-    public float throwHeightFactor = 0.5f; // Factor to control the height of the throw
-
-    private float mouseHoldStartTime;
+    public float throwForce = 10f; // The force with which the object is thrown
 
     public GameManager gameManager;
 
@@ -155,17 +152,16 @@ public class PlayerController : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0)) // Left mouse button pressed
         {
-            mouseHoldStartTime = Time.time; // Record the time when the mouse button is pressed
-        }
+             animator.SetTrigger("QuickAttack");
 
-        if (Input.GetMouseButtonUp(0)) // Left mouse button released
-        {
-            float holdDuration = Time.time - mouseHoldStartTime; // Calculate how long the mouse button was held
-            float throwForce = Mathf.Clamp(holdDuration * maxThrowForce, 0, maxThrowForce); // Calculate throw force based on hold duration
-            SpawnAndThrowObject(throwForce);
+            StartCoroutine(spawnandThrowObjectCount());
         }
     }
 
+IEnumerator spawnandThrowObjectCount() {
+    yield return new WaitForSeconds(0.5f);
+    SpawnAndThrowObject();
+}
     void PerformQuickAttack()
     {
         quickAttackCooldown = true;
@@ -211,7 +207,7 @@ public class PlayerController : MonoBehaviour
         quickAttackSfx.SetActive(false);
     }
 
-    void SpawnAndThrowObject(float throwForce)
+    void SpawnAndThrowObject()
     {
         Ray ray = camera.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit))
@@ -220,16 +216,46 @@ public class PlayerController : MonoBehaviour
             GameObject thrownObject = Instantiate(throwableObject, spawnPosition, Quaternion.identity);
             thrownObject.AddComponent<ThrowableObject>().Initialize(replacementObject); // Attach the replacement logic to the throwable object
 
-            // Ensure the target point is at the same level as the player to avoid throwing too high or too low
-            Vector3 targetPoint = new Vector3(hit.point.x, spawnPosition.y, hit.point.z);
-            Vector3 throwDirection = (targetPoint - spawnPosition).normalized;
+            // Calculate the throw direction
+            Vector3 targetPoint = hit.point;
+            Vector3 throwDirection = CalculateThrowDirection(spawnPosition, targetPoint);
 
-            // Add an upward force component
-            throwDirection += Vector3.up * throwHeightFactor;
-
-            Rigidbody rb = thrownObject.GetComponent<Rigidbody>();
-            rb.AddForce(throwDirection * throwForce, ForceMode.Impulse);
+            if (!float.IsNaN(throwDirection.x) && !float.IsNaN(throwDirection.y) && !float.IsNaN(throwDirection.z))
+            {
+                Rigidbody rb = thrownObject.GetComponent<Rigidbody>();
+                rb.AddForce(throwDirection, ForceMode.VelocityChange);
+            }
         }
+    }
+
+    Vector3 CalculateThrowDirection(Vector3 start, Vector3 target)
+    {
+        Vector3 direction = target - start;
+        direction.y = 0; // Ignore vertical distance for horizontal throw direction
+
+        float distance = direction.magnitude;
+        direction.Normalize();
+
+        float heightDifference = target.y - start.y;
+
+        if (heightDifference < 0)
+        {
+            heightDifference = 0; // Prevent negative height differences
+        }
+
+        // Calculate the initial velocity needed to reach the target
+        float initialVelocityY = Mathf.Sqrt(2 * Mathf.Abs(Physics.gravity.y) * heightDifference);
+        float timeToReachTarget = distance / throwForce;
+
+        if (float.IsInfinity(timeToReachTarget) || float.IsNaN(timeToReachTarget) || timeToReachTarget <= 0)
+        {
+            timeToReachTarget = 1; // Set a default time if the calculation is invalid
+        }
+
+        Vector3 velocity = direction * throwForce;
+        velocity.y = initialVelocityY;
+
+        return velocity;
     }
 }
 
