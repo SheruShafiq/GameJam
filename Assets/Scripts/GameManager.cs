@@ -5,7 +5,10 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour
 {
     [Header("Prefabs")]
+    public bool isNukeTriggered = false;
     public GameObject levelupUI;
+
+    public GameObject tutorialText;
     public bool isPlayerDead = false;
     public GameObject defaultHud;
     public GameObject deathHud;
@@ -39,7 +42,7 @@ public class GameManager : MonoBehaviour
         Debug.Log("Spawning Enemies: " + enemySpawnCount);
         for (int i = 0; i < enemySpawnCount; i++)
         {
-                        Vector3 spawnPosition = GetRandomSpawnPosition(enemySpawnRangeX, enemySpawnRangeZ);
+            Vector3 spawnPosition = GetRandomSpawnPosition(enemySpawnRangeX, enemySpawnRangeZ);
 
             Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
         }
@@ -89,16 +92,29 @@ public class GameManager : MonoBehaviour
         if (GameObject.FindGameObjectsWithTag("Enemy").Length == 0 && !isSpawningEnemies)
         {
             isSpawningEnemies = true;
+            tutorialText.SetActive(false);
             levelupUI.SetActive(true);
             StartCoroutine(AllEnemiesKilled());
         }
     }
 
+    public void TriggerNuke()
+    {
+        isNukeTriggered = true;
+        StartCoroutine(resetNuke());
+    }
+
+    IEnumerator resetNuke()
+    {
+        yield return new WaitForSeconds(6);
+        isNukeTriggered = false;
+    }
     IEnumerator AllEnemiesKilled()
     {
         yield return new WaitForSeconds(5);
         levelupUI.SetActive(false);
-        currentLvl++; 
+        tutorialText.SetActive(true);
+        currentLvl++;
         Debug.Log("Level Up: " + currentLvl);
         SpawnEnemies();
         SpawnPotions();
@@ -106,7 +122,7 @@ public class GameManager : MonoBehaviour
         Debug.Log("EnemySpawn Count: " + (enemyBaseSpawnCount + (currentLvl - 1) * 10));
         Debug.Log("Potion Spawn Count: " + (potionBaseSpawnCount + (currentLvl - 1)));
     }
- 
+
     IEnumerator RestartGame()
     {
         yield return new WaitForSeconds(2);

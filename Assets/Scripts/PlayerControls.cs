@@ -16,27 +16,41 @@ public class PlayerController : MonoBehaviour
     public GameObject onHealingParticleFX;
     private bool Attacking = false;
     private bool quickAttackCooldown = false;
+    private bool throwPotionCooldown = false;
     public GameObject walkingSfx;
-    public GameObject fireEffect;
     public GameObject quickAttackSfx;
     public GameObject HealingPotionObject;
     public HPBar hpBar;
     public Timer quickAttackTimer;
+    public Timer throwPotionTimer;
     private Coroutine quickAttackCooldownCoroutine;
-    public GameObject throwableObject; // The object to be thrown
-    public GameObject replacementObject; // The object to replace the thrown object
+    private Coroutine throwPotionCooldownCoroutine;
+    private GameObject throwableObject; // The object to be thrown
+    private GameObject replacementObject; // The object to replace the thrown object
+    public GameObject firePotion; // The object to be thrown
+    public GameObject fireEffect;
+    public GameObject electroPotion; // The object to be thrown
+    public GameObject electroEffect; // The object to replace the thrown object
     public float throwForce = 10f; // The force with which the object is thrown
 
     public GameManager gameManager;
 
     void Start()
     {
+        throwableObject = firePotion;
+        replacementObject = fireEffect;
         quickAttackCooldown = true;
+        throwPotionCooldown = true;
+        StartCoroutine(ThrowPotionCoolDown());
         StartCoroutine(QuickAttackCoolDown());
         animator = GetComponent<Animator>();
         if (quickAttackTimer != null)
         {
             quickAttackTimer.onTimerEnd.AddListener(OnQuickAttackCooldownEnd);
+        }
+        if (throwPotionTimer != null)
+        {
+            throwPotionTimer.onTimerEnd.AddListener(OnThrowPotionCooldownEnd);
         }
     }
 
@@ -48,9 +62,6 @@ public class PlayerController : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        Debug.Log("Collided with: " + collision.gameObject.name);
-        Debug.Log("Collided with tag: " + collision.gameObject.tag);
-
         if (collision.gameObject.CompareTag("HealingPotion"))
         {
             StartCoroutine(TurnOffHealingParticleAuraIn4Sec());
@@ -63,7 +74,6 @@ public class PlayerController : MonoBehaviour
         {
             Vector3 targetPosition = new Vector3(transform.position.x - 5, transform.position.y, transform.position.z - 5);
             transform.position = Vector3.MoveTowards(transform.position, targetPosition, knockBackSpeed * Time.deltaTime);
-            Debug.Log("Player collided with an enemy!");
             hpBar.DecreaseHP(10); // Decrease the player's HP by 10 points
             animator.SetTrigger("isHit");
             if (hpBar.currentHP <= 0)
@@ -77,7 +87,10 @@ public class PlayerController : MonoBehaviour
                 {
                     StopCoroutine(quickAttackCooldownCoroutine);
                 }
-
+                if (throwPotionCooldownCoroutine != null)
+                {
+                    StopCoroutine(throwPotionCooldownCoroutine);
+                }
                 if (gameManager != null)
                 {
                     gameManager.isPlayerDead = true;
@@ -88,6 +101,16 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            throwableObject = firePotion;
+            replacementObject = fireEffect;
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            throwableObject = electroPotion;
+            replacementObject = electroEffect;
+        }
         if (hpBar.currentHP <= 0)
         {
             return; // Prevent movement if HP is 0 or less
@@ -98,70 +121,62 @@ public class PlayerController : MonoBehaviour
             PerformQuickAttack();
         }
 
-        float moveHorizontal = Input.GetAxis("Horizontal");
-        float moveVertical = Input.GetAxis("Vertical");
-        if (!Attacking)
+        if (Input.GetMouseButtonDown(0) && !throwPotionCooldown) // Left mouse button pressed
         {
-            Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
-
-            if (movement.magnitude > 1)
-            {
-                movement.Normalize();
-            }
-
-            bool isMoving = movement.magnitude > 0;
-            bool isSprinting = Input.GetKey(KeyCode.LeftShift) && isMoving;
-            if (isMoving)
-            {
-                walkingSfx.SetActive(true);
-            }
-            else
-            {
-                walkingSfx.SetActive(false);
-            }
-            if (isSprinting)
-            {
-                walkingSfx.SetActive(false);
-                sprintingSfx.SetActive(true);
-                if (currentSpeed < sprintSpeed)
-                {
-                    currentSpeed += acceleration * Time.deltaTime;
-                    if (currentSpeed > sprintSpeed)
-                    {
-                        currentSpeed = sprintSpeed;
-                    }
-                }
-            }
-            else
-            {
-                sprintingSfx.SetActive(false);
-                currentSpeed = moveSpeed;
-            }
-
-            animator.SetBool("isRunning", isSprinting);
-            animator.SetBool("isWalking", isMoving && !isSprinting);
-
-            transform.Translate(currentSpeed * Time.deltaTime * movement, Space.World);
-
-            if (movement != Vector3.zero)
-            {
-                Quaternion toRotation = Quaternion.LookRotation(movement, Vector3.up);
-                transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, turnSpeed * Time.deltaTime);
-            }
+            PerformThrowPotion();
         }
 
-        if (Input.GetMouseButtonDown(0)) // Left mouse button pressed
-        {
-             animator.SetTrigger("QuickAttack");
+        float moveHorizontal = Input.GetAxis("Horizontal");
+        float moveVertical = Input.GetAxis("Vertical");
 
-            StartCoroutine(spawnandThrowObjectCount());
+        Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
+
+        if (movement.magnitude > 1)
+        {
+            movement.Normalize();
+        }
+
+        bool isMoving = movement.magnitude > 0;
+        bool isSprinting = Input.GetKey(KeyCode.LeftShift) && isMoving;
+        if (isMoving)
+        {
+            walkingSfx.SetActive(true);
+        }
+        else
+        {
+            walkingSfx.SetActive(false);
+        }
+        if (isSprinting)
+        {
+            walkingSfx.SetActive(false);
+            sprintingSfx.SetActive(true);
+            if (currentSpeed < sprintSpeed)
+            {
+                currentSpeed += acceleration * Time.deltaTime;
+                if (currentSpeed > sprintSpeed)
+                {
+                    currentSpeed = sprintSpeed;
+                }
+            }
+        }
+        else
+        {
+            sprintingSfx.SetActive(false);
+            currentSpeed = moveSpeed;
+        }
+
+        animator.SetBool("isRunning", isSprinting);
+        animator.SetBool("isWalking", isMoving && !isSprinting);
+
+        transform.Translate(currentSpeed * Time.deltaTime * movement, Space.World);
+
+        if (movement != Vector3.zero)
+        {
+            Quaternion toRotation = Quaternion.LookRotation(movement, Vector3.up);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, turnSpeed * Time.deltaTime);
         }
     }
 
-IEnumerator spawnandThrowObjectCount() {
-    yield return new WaitForSeconds(0.5f);
-    SpawnAndThrowObject();
-}
     void PerformQuickAttack()
     {
         quickAttackCooldown = true;
@@ -182,15 +197,20 @@ IEnumerator spawnandThrowObjectCount() {
 
     IEnumerator QuickAttackCoolDown()
     {
+        int cooldownDuration = 2;
+        if (gameManager.isNukeTriggered)
+        {
+            cooldownDuration *= 2;
+        }
         if (quickAttackTimer != null)
         {
             quickAttackTimer.hours = 0;
             quickAttackTimer.minutes = 0;
-            quickAttackTimer.seconds = 2;
+            quickAttackTimer.seconds = cooldownDuration;
             quickAttackTimer.StartTimer();
         }
 
-        yield return new WaitForSeconds(2);
+        yield return new WaitForSeconds(cooldownDuration);
 
         quickAttackCooldown = false;
     }
@@ -198,6 +218,53 @@ IEnumerator spawnandThrowObjectCount() {
     void OnQuickAttackCooldownEnd()
     {
         quickAttackCooldown = false;
+    }
+
+    void PerformThrowPotion()
+    {
+        throwPotionCooldown = true;
+        animator.SetTrigger("QuickAttack");
+        Attacking = true;
+        animator.SetBool("isRunning", false);
+        animator.SetBool("isWalking", false);
+        StartCoroutine(spawnAndThrowObjectCount());
+
+        if (throwPotionCooldownCoroutine != null)
+        {
+            StopCoroutine(throwPotionCooldownCoroutine);
+        }
+        throwPotionCooldownCoroutine = StartCoroutine(ThrowPotionCoolDown());
+    }
+
+    IEnumerator ThrowPotionCoolDown()
+    {
+        int cooldownDuration = 3;
+        if (gameManager.isNukeTriggered)
+        {
+            cooldownDuration *= 2;
+        }
+        if (throwPotionTimer != null)
+        {
+            throwPotionTimer.hours = 0;
+            throwPotionTimer.minutes = 0;
+            throwPotionTimer.seconds = cooldownDuration;
+            throwPotionTimer.StartTimer();
+        }
+
+        yield return new WaitForSeconds(cooldownDuration);
+
+        throwPotionCooldown = false;
+    }
+
+    void OnThrowPotionCooldownEnd()
+    {
+        throwPotionCooldown = false;
+    }
+
+    IEnumerator spawnAndThrowObjectCount()
+    {
+        yield return new WaitForSeconds(0.5f);
+        SpawnAndThrowObject();
     }
 
     public void EndAttack()
@@ -209,12 +276,19 @@ IEnumerator spawnandThrowObjectCount() {
 
     void SpawnAndThrowObject()
     {
+        if (throwableObject == null)
+        {
+            Debug.LogError("throwableObject is null!");
+            return;
+        }
+
         Ray ray = camera.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
             Vector3 spawnPosition = transform.position; // Spawn at player's position
             GameObject thrownObject = Instantiate(throwableObject, spawnPosition, Quaternion.identity);
-            thrownObject.AddComponent<ThrowableObject>().Initialize(replacementObject); // Attach the replacement logic to the throwable object
+            ThrowableObject throwableObjScript = thrownObject.AddComponent<ThrowableObject>();
+            throwableObjScript.Initialize(replacementObject);
 
             // Calculate the throw direction
             Vector3 targetPoint = hit.point;
@@ -223,7 +297,14 @@ IEnumerator spawnandThrowObjectCount() {
             if (!float.IsNaN(throwDirection.x) && !float.IsNaN(throwDirection.y) && !float.IsNaN(throwDirection.z))
             {
                 Rigidbody rb = thrownObject.GetComponent<Rigidbody>();
-                rb.AddForce(throwDirection, ForceMode.VelocityChange);
+                if (rb != null)
+                {
+                    rb.AddForce(throwDirection, ForceMode.VelocityChange);
+                }
+                else
+                {
+                    Debug.LogError("No Rigidbody attached to the throwable object!");
+                }
             }
         }
     }
@@ -278,9 +359,15 @@ public class ThrowableObject : MonoBehaviour
 
     private void ReplaceObject()
     {
+        if (replacementObject == null)
+        {
+            Debug.LogError("replacementObject is null!");
+            return;
+        }
+
         Vector3 replacementPosition = transform.position;
         Destroy(gameObject);
         GameObject replacement = Instantiate(replacementObject, replacementPosition, Quaternion.identity);
-        Destroy(replacement, 5f); // Destroy the replacement object after 5 seconds
+        Destroy(replacement, 4f); // Destroy the replacement object after 5 seconds
     }
 }

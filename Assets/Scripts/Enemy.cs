@@ -23,10 +23,15 @@ public class Enemy : MonoBehaviour
     private GameObject gameManagerObject;
     private Rigidbody rb; // Add a reference to the Rigidbody
     public GameObject electroVFX;
+    public GameObject fireVFX;
+    public GameObject nukeVFX;
     private Coroutine electroDamageCoroutine; // To track the electro damage coroutine
+    private Coroutine fireDamageCoroutine; // To track the fire damage coroutine
 
     void Start()
     {
+        stopFollowing = true;
+        StartCoroutine(continueFollowing());
         player = GameObject.FindGameObjectWithTag("Player").transform;
         gameManagerObject = GameObject.FindGameObjectWithTag("GameManager");
         gameManager = gameManagerObject.GetComponent<GameManager>();
@@ -83,6 +88,27 @@ public class Enemy : MonoBehaviour
             // Inflict damage and play attack animation
             InflictDamage();
         }
+        if (currentStatusEffects.Contains("Fire") && currentStatusEffects.Contains("Electro"))
+        {
+            if (nukeVFX != null)
+            {
+                InstantiateAndDestroyNukeVFX();
+            }
+            if (electroDamageCoroutine != null)
+            {
+                StopCoroutine(electroDamageCoroutine);
+            }
+            if (fireDamageCoroutine != null)
+            {
+                StopCoroutine(fireDamageCoroutine);
+            }
+        }
+    }
+
+    void InstantiateAndDestroyNukeVFX()
+    {
+        GameObject nukeEffect = Instantiate(nukeVFX, transform.position, transform.rotation);
+        Destroy(nukeEffect, 2f);
     }
 
     IEnumerator TakeElectroDamageFor5Seconds()
@@ -92,7 +118,7 @@ public class Enemy : MonoBehaviour
 
         while (timer > 0)
         {
-            currentHP -= 5;
+            currentHP -= 1;
             if (hpSlider != null)
             {
                 hpSlider.value = currentHP;
@@ -118,8 +144,6 @@ public class Enemy : MonoBehaviour
         if (playerController != null)
         {
             playerController.hpBar.DecreaseHP(Mathf.FloorToInt(damagePerSecond * Time.deltaTime));
-            stopFollowing = true;
-            StartCoroutine(continueFollowing());
         }
         else
         {
@@ -129,19 +153,29 @@ public class Enemy : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Player"))
+        if (collision.gameObject.CompareTag("Nuke"))
+        {
+            currentHP -= 100;
+            if (hpSlider != null)
+            {
+                hpSlider.value = currentHP;
+            }
+            if (currentHP <= 0)
+            {
+                gameManager.TriggerNuke(); // Trigger the nuke event
+                Die();
+            }
+        }
+        else if (collision.gameObject.CompareTag("Player"))
         {
             isCollidingWithPlayer = true;
         }
-
-        if (collision.gameObject.CompareTag("QuickAttackProjectile"))
+        else if (collision.gameObject.CompareTag("QuickAttackProjectile"))
         {
             TakeDamage(5);
-            // Destroy the entity this script is attached to
         }
-        if (collision.gameObject.CompareTag("Lightning Effect Inflicter"))
+        else if (collision.gameObject.CompareTag("Lightning Effect Inflicter"))
         {
-            Debug.Log("contact with electro");
             if (electroDamageCoroutine != null)
             {
                 StopCoroutine(electroDamageCoroutine);
@@ -149,6 +183,42 @@ public class Enemy : MonoBehaviour
             currentStatusEffects.Add("Electro");
             electroDamageCoroutine = StartCoroutine(TakeElectroDamageFor5Seconds());
         }
+        else if (collision.gameObject.CompareTag("Fire Effect Inflicter"))
+        {
+            if (electroDamageCoroutine != null)
+            {
+                StopCoroutine(electroDamageCoroutine);
+            }
+            currentStatusEffects.Add("Fire");
+            fireDamageCoroutine = StartCoroutine(TakeFireDamageFor5Seconds());
+        }
+    }
+
+
+    IEnumerator TakeFireDamageFor5Seconds()
+    {
+        float timer = 5f;
+        fireVFX.SetActive(true);
+
+        while (timer > 0)
+        {
+            currentHP -= 1;
+            if (hpSlider != null)
+            {
+                hpSlider.value = currentHP;
+            }
+            if (currentHP <= 0)
+            {
+                Die();
+                yield break;
+            }
+            yield return new WaitForSeconds(1);
+            timer -= 1f;
+        }
+
+        fireVFX.SetActive(false);
+        currentStatusEffects.Remove("Fire");
+        fireDamageCoroutine = null;
     }
 
     void OnCollisionExit(Collision collision)
@@ -175,7 +245,6 @@ public class Enemy : MonoBehaviour
 
     void Die()
     {
-        Debug.Log("Enemy died!");
         if (deathEffect != null)
         {
             GameObject effect = Instantiate(deathEffect, transform.position, transform.rotation);
