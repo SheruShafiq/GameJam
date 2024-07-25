@@ -844,15 +844,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 454abcb63fdd342248a1f8221baa4051, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gameManager: {fileID: 0}
   animator: {fileID: 7351614792416361420}
-  maxHP: 10
+  maxHP: 50
   hpSlider: {fileID: 1292028188481720788}
   deathEffect: {fileID: 6126188424833946103, guid: a58aa9a78f2b45b45bb0f3e2e1e3ad3c,
     type: 3}
-  player: {fileID: 0}
   followSpeed: 5
-  damagePerSecond: 10
+  damagePerSecond: 5
   separationDistance: 2
   separationForce: 5
 --- !u!1 &5450709100893070371

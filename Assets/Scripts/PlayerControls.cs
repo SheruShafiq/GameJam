@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    public Camera camera;
     public float moveSpeed = 5f;
     public float knockBackSpeed = 5.0f;
     public float sprintSpeed = 10f;
@@ -11,16 +12,23 @@ public class PlayerController : MonoBehaviour
     private float currentSpeed;
     private Animator animator;
     public GameObject sprintingSfx;
-    public GameObject quickAttackParticleFX;
+    public GameObject quickAttackBase;
     public GameObject onHealingParticleFX;
     private bool Attacking = false;
     private bool quickAttackCooldown = false;
     public GameObject walkingSfx;
+    public GameObject fireEffect;
     public GameObject quickAttackSfx;
     public GameObject HealingPotionObject;
     public HPBar hpBar;
     public Timer quickAttackTimer;
     private Coroutine quickAttackCooldownCoroutine;
+    public GameObject throwableObject; // The object to be thrown
+    public GameObject replacementObject; // The object to replace the thrown object
+    public float maxThrowForce = 100f;
+    public float throwHeightFactor = 0.5f; // Factor to control the height of the throw
+
+    private float mouseHoldStartTime;
 
     public GameManager gameManager;
 
@@ -33,8 +41,6 @@ public class PlayerController : MonoBehaviour
         {
             quickAttackTimer.onTimerEnd.AddListener(OnQuickAttackCooldownEnd);
         }
-
-
     }
 
     IEnumerator TurnOffHealingParticleAuraIn4Sec()
@@ -65,16 +71,16 @@ public class PlayerController : MonoBehaviour
             animator.SetTrigger("isHit");
             if (hpBar.currentHP <= 0)
             {
-                quickAttackParticleFX.SetActive(false);
+                quickAttackBase.SetActive(false);
                 quickAttackSfx.SetActive(false);
                 animator.SetBool("isDead", true);
-                  walkingSfx.SetActive(false);
+                walkingSfx.SetActive(false);
                 sprintingSfx.SetActive(false);
                 if (quickAttackCooldownCoroutine != null)
                 {
                     StopCoroutine(quickAttackCooldownCoroutine);
                 }
-                
+
                 if (gameManager != null)
                 {
                     gameManager.isPlayerDead = true;
@@ -146,12 +152,24 @@ public class PlayerController : MonoBehaviour
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, turnSpeed * Time.deltaTime);
             }
         }
+
+        if (Input.GetMouseButtonDown(0)) // Left mouse button pressed
+        {
+            mouseHoldStartTime = Time.time; // Record the time when the mouse button is pressed
+        }
+
+        if (Input.GetMouseButtonUp(0)) // Left mouse button released
+        {
+            float holdDuration = Time.time - mouseHoldStartTime; // Calculate how long the mouse button was held
+            float throwForce = Mathf.Clamp(holdDuration * maxThrowForce, 0, maxThrowForce); // Calculate throw force based on hold duration
+            SpawnAndThrowObject(throwForce);
+        }
     }
 
     void PerformQuickAttack()
     {
         quickAttackCooldown = true;
-        quickAttackParticleFX.SetActive(true);
+        quickAttackBase.SetActive(true);
         animator.SetTrigger("QuickAttack");
         Attacking = true;
         animator.SetBool("isRunning", false);
@@ -188,8 +206,55 @@ public class PlayerController : MonoBehaviour
 
     public void EndAttack()
     {
-        quickAttackParticleFX.SetActive(false);
+        quickAttackBase.SetActive(false);
         Attacking = false;
         quickAttackSfx.SetActive(false);
+    }
+
+    void SpawnAndThrowObject(float throwForce)
+    {
+        Ray ray = camera.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out RaycastHit hit))
+        {
+            Vector3 spawnPosition = transform.position; // Spawn at player's position
+            GameObject thrownObject = Instantiate(throwableObject, spawnPosition, Quaternion.identity);
+            thrownObject.AddComponent<ThrowableObject>().Initialize(replacementObject); // Attach the replacement logic to the throwable object
+
+            // Ensure the target point is at the same level as the player to avoid throwing too high or too low
+            Vector3 targetPoint = new Vector3(hit.point.x, spawnPosition.y, hit.point.z);
+            Vector3 throwDirection = (targetPoint - spawnPosition).normalized;
+
+            // Add an upward force component
+            throwDirection += Vector3.up * throwHeightFactor;
+
+            Rigidbody rb = thrownObject.GetComponent<Rigidbody>();
+            rb.AddForce(throwDirection * throwForce, ForceMode.Impulse);
+        }
+    }
+}
+
+public class ThrowableObject : MonoBehaviour
+{
+    private GameObject replacementObject;
+
+    public void Initialize(GameObject replacement)
+    {
+        replacementObject = replacement;
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Ground"))
+        {
+            ReplaceObject();
+        }
+    }
+
+    private void ReplaceObject()
+    {
+        Vector3 replacementPosition = transform.position;
+        Destroy(gameObject);
+        GameObject replacement = Instantiate(replacementObject, replacementPosition, Quaternion.identity);
+        Destroy(replacement, 5f); // Destroy the replacement object after 5 seconds
     }
 }

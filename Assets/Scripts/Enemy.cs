@@ -6,7 +6,7 @@ public class Enemy : MonoBehaviour
 {
     private bool stopFollowing;
     public Animator animator;
-    public int maxHP = 10;
+    public int maxHP = 100;
     private int currentHP;
     public Slider hpSlider;
     public GameObject deathEffect; // Optional: A particle effect or animation on death
@@ -106,9 +106,9 @@ private Transform player;
 
     if (collision.gameObject.CompareTag("QuickAttackProjectile"))
     {
-        TakeDamage(20);
+        TakeDamage(5);
         // Destroy the entity this script is attached to
-        Destroy(gameObject);
+      
     }
 }
 
