@@ -1,6 +1,8 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class Enemy : MonoBehaviour
 {
@@ -10,16 +12,18 @@ public class Enemy : MonoBehaviour
     private int currentHP;
     public Slider hpSlider;
     public GameObject deathEffect; // Optional: A particle effect or animation on death
-
+    public List<string> currentStatusEffects;
     public float followSpeed = 30f; // Speed at which the enemy follows the player
     public int damagePerSecond = 10; // Damage inflicted per second while in collision
     public float separationDistance = 2f; // Minimum distance between enemies to avoid merging
     public float separationForce = 5f; // Force applied to separate enemies
-private Transform player;
+    private Transform player;
     private GameManager gameManager;
     private bool isCollidingWithPlayer = false;
     private GameObject gameManagerObject;
     private Rigidbody rb; // Add a reference to the Rigidbody
+    public GameObject electroVFX;
+    private bool isTakingElectroDamage = false; // Flag to ensure coroutine runs only once
 
     void Start()
     {
@@ -45,7 +49,7 @@ private Transform player;
         }
     }
 
-    IEnumerator continueFowllowing()
+    IEnumerator continueFollowing()
     {
         yield return new WaitForSeconds(2);
         stopFollowing = false;
@@ -79,6 +83,34 @@ private Transform player;
             // Inflict damage and play attack animation
             InflictDamage();
         }
+        if (currentStatusEffects.Contains("Electro") && !isTakingElectroDamage)
+        {
+            Debug.Log("Taking electro damage");
+            StartCoroutine(TakeElectroDamageFor5Seconds());
+        }
+    }
+
+    IEnumerator TakeElectroDamageFor5Seconds()
+    {
+        isTakingElectroDamage = true;
+        electroVFX.SetActive(true);
+        for (int i = 0; i < 5; i++)
+        {
+            currentHP -= 5;
+            if (hpSlider != null)
+            {
+                hpSlider.value = currentHP;
+            }
+            if (currentHP <= 0)
+            {
+                Die();
+                yield break;
+            }
+            yield return new WaitForSeconds(1);
+        }
+        electroVFX.SetActive(false);
+        isTakingElectroDamage = false;
+        currentStatusEffects.Remove("Electro");
     }
 
     void InflictDamage()
@@ -89,7 +121,7 @@ private Transform player;
         {
             playerController.hpBar.DecreaseHP(Mathf.FloorToInt(damagePerSecond * Time.deltaTime));
             stopFollowing = true;
-            StartCoroutine(continueFowllowing());
+            StartCoroutine(continueFollowing());
         }
         else
         {
@@ -97,21 +129,24 @@ private Transform player;
         }
     }
 
-   void OnCollisionEnter(Collision collision)
-{
-    if (collision.gameObject.CompareTag("Player"))
+    void OnCollisionEnter(Collision collision)
     {
-        isCollidingWithPlayer = true;
-    }
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            isCollidingWithPlayer = true;
+        }
 
-    if (collision.gameObject.CompareTag("QuickAttackProjectile"))
-    {
-        TakeDamage(5);
-        // Destroy the entity this script is attached to
-      
+        if (collision.gameObject.CompareTag("QuickAttackProjectile"))
+        {
+            TakeDamage(5);
+            // Destroy the entity this script is attached to
+        }
+        if (collision.gameObject.CompareTag("Lightning Effect Inflicter"))
+        {
+            Debug.Log("contact with electro");
+            currentStatusEffects.Add("Electro");
+        }
     }
-}
-
 
     void OnCollisionExit(Collision collision)
     {
@@ -135,17 +170,17 @@ private Transform player;
         }
     }
 
-void Die()
-{
-    Debug.Log("Enemy died!");
-    if (deathEffect != null)
+    void Die()
     {
-        GameObject effect = Instantiate(deathEffect, transform.position, transform.rotation);
-        Destroy(effect, 2f); // Destroy the deathEffect after 2 seconds
-    }
+        Debug.Log("Enemy died!");
+        if (deathEffect != null)
+        {
+            GameObject effect = Instantiate(deathEffect, transform.position, transform.rotation);
+            Destroy(effect, 2f); // Destroy the deathEffect after 2 seconds
+        }
 
-    Destroy(gameObject);
-}
+        Destroy(gameObject);
+    }
 
     void FloatAwayFromPlayer()
     {
@@ -165,7 +200,7 @@ void Die()
             {
                 Vector3 separationDirection = transform.position - collider.transform.position;
                 rb.AddForce(separationDirection.normalized * separationForce, ForceMode.Force);
-            }
+            } 
         }
     }
 }

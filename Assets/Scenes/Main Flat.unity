@@ -2442,7 +2442,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &483697317
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2459,7 +2459,7 @@ MonoBehaviour:
   isPlayerDead: 0
   defaultHud: {fileID: 1412446044}
   deathHud: {fileID: 1708667270}
-  enemyPrefab: {fileID: 5139512710120544745, guid: a7c53c1fcd3534a449da1997eacd6ae3,
+  enemyPrefab: {fileID: 4076361492741452062, guid: 0fe273f79ba0b47b2aeb45e526966140,
     type: 3}
   healingPotionPrefab: {fileID: 7256374338624830099, guid: c11f09f28c0ef48b593af2c33b13644d,
     type: 3}
@@ -20298,7 +20298,7 @@ MonoBehaviour:
   quickAttackTimer: {fileID: 471662593318505302}
   throwableObject: {fileID: 6982798068863095417, guid: 87ee4103d5914da4cb47d5a3218820ad,
     type: 3}
-  replacementObject: {fileID: 7131401307255788800, guid: 4d9a3b35b3bc07649b697df7fb497b6d,
+  replacementObject: {fileID: 8555691244287459198, guid: 5e48477b0e7df4403979cce30b1d59b9,
     type: 3}
   throwForce: 50
   gameManager: {fileID: 483697317}
