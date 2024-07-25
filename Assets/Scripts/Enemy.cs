@@ -23,7 +23,7 @@ public class Enemy : MonoBehaviour
     private GameObject gameManagerObject;
     private Rigidbody rb; // Add a reference to the Rigidbody
     public GameObject electroVFX;
-    private bool isTakingElectroDamage = false; // Flag to ensure coroutine runs only once
+    private Coroutine electroDamageCoroutine; // To track the electro damage coroutine
 
     void Start()
     {
@@ -83,18 +83,14 @@ public class Enemy : MonoBehaviour
             // Inflict damage and play attack animation
             InflictDamage();
         }
-        if (currentStatusEffects.Contains("Electro") && !isTakingElectroDamage)
-        {
-            Debug.Log("Taking electro damage");
-            StartCoroutine(TakeElectroDamageFor5Seconds());
-        }
     }
 
     IEnumerator TakeElectroDamageFor5Seconds()
     {
-        isTakingElectroDamage = true;
+        float timer = 5f;
         electroVFX.SetActive(true);
-        for (int i = 0; i < 5; i++)
+
+        while (timer > 0)
         {
             currentHP -= 5;
             if (hpSlider != null)
@@ -107,10 +103,12 @@ public class Enemy : MonoBehaviour
                 yield break;
             }
             yield return new WaitForSeconds(1);
+            timer -= 1f;
         }
+
         electroVFX.SetActive(false);
-        isTakingElectroDamage = false;
         currentStatusEffects.Remove("Electro");
+        electroDamageCoroutine = null;
     }
 
     void InflictDamage()
@@ -144,7 +142,12 @@ public class Enemy : MonoBehaviour
         if (collision.gameObject.CompareTag("Lightning Effect Inflicter"))
         {
             Debug.Log("contact with electro");
+            if (electroDamageCoroutine != null)
+            {
+                StopCoroutine(electroDamageCoroutine);
+            }
             currentStatusEffects.Add("Electro");
+            electroDamageCoroutine = StartCoroutine(TakeElectroDamageFor5Seconds());
         }
     }
 
@@ -200,7 +203,7 @@ public class Enemy : MonoBehaviour
             {
                 Vector3 separationDirection = transform.position - collider.transform.position;
                 rb.AddForce(separationDirection.normalized * separationForce, ForceMode.Force);
-            } 
+            }
         }
     }
 }
