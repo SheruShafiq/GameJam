@@ -7,6 +7,7 @@ public class GameManager : MonoBehaviour
     [Header("Prefabs")]
     public bool isNukeTriggered = false;
     public GameObject levelupUI;
+    public GameObject BossEnemyV1;
 
     public GameObject tutorialText;
     public bool isPlayerDead = false;
@@ -42,10 +43,20 @@ public class GameManager : MonoBehaviour
         Debug.Log("Spawning Enemies: " + enemySpawnCount);
         for (int i = 0; i < enemySpawnCount; i++)
         {
-            Vector3 spawnPosition = GetRandomSpawnPosition(enemySpawnRangeX, enemySpawnRangeZ);
+            Vector3 spawnPosition = GetRandomSpawnPosition(enemySpawnRangeX + 10, enemySpawnRangeZ + 10);
 
             Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
         }
+        SpawnBoss();
+    }
+
+    private void SpawnBoss()
+    {
+        if (currentLvl > 2)
+            for (int i = 0; i < currentLvl * 2; i++)
+            {
+                Instantiate(BossEnemyV1, GetValidSpawnPosition(enemySpawnRangeX + 50, enemySpawnRangeZ + 50), Quaternion.identity);
+            }
     }
 
     private void SpawnPotions()

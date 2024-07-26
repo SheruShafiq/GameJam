@@ -95,7 +95,8 @@ public class Enemy : MonoBehaviour
         {
             if (nukeVFX != null)
             {
-                InstantiateAndDestroyNukeVFX();
+                if (GameObject.FindGameObjectsWithTag("Nuke").Length == 0)
+                    InstantiateAndDestroyNukeVFX();
             }
 
             if (electroDamageCoroutine != null)

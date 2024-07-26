@@ -1268,6 +1268,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isNukeTriggered: 0
   levelupUI: {fileID: 1123690455}
+  BossEnemyV1: {fileID: 2508435949317002660, guid: 562a0dbb3cbe9c74dacb65fb6f4adc5f,
+    type: 3}
   tutorialText: {fileID: 129504534}
   isPlayerDead: 0
   defaultHud: {fileID: 1412446044}

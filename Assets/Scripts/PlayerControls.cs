@@ -263,7 +263,7 @@ public class PlayerController : MonoBehaviour
 
     IEnumerator ThrowPotionCoolDown()
     {
-        int cooldownDuration = 3;
+        int cooldownDuration = 1;
         if (gameManager.isNukeTriggered)
         {
             cooldownDuration *= 2;

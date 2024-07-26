@@ -9895,6 +9895,7 @@ GameObject:
   - component: {fileID: 3463844870643151013}
   - component: {fileID: 4474466860095703046}
   - component: {fileID: 3140420287600948499}
+  - component: {fileID: 2885294600891544738}
   m_Layer: 0
   m_Name: Collision Cube
   m_TagString: Lightning Effect Inflicter
@@ -10039,6 +10040,18 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &2885294600891544738
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7656268203524962084}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d70c3a59b7ea1f643bbf6f6d23f53e19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &8555691244287459198
 GameObject:
   m_ObjectHideFlags: 0

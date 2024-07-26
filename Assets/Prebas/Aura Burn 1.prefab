@@ -14656,6 +14656,7 @@ GameObject:
   - component: {fileID: 2728303558075506722}
   - component: {fileID: 4993171552101691773}
   - component: {fileID: 1983908230111077925}
+  - component: {fileID: 1608888979131473407}
   m_Layer: 0
   m_Name: Collision Cube
   m_TagString: Fire Effect Inflicter
@@ -14800,3 +14801,15 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1608888979131473407
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8281214092588488157}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d70c3a59b7ea1f643bbf6f6d23f53e19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
