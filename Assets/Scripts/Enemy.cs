@@ -12,23 +12,25 @@ public class Enemy : MonoBehaviour
     public GameObject fireStatusIcon;
     public GameObject electroStatusIcon;
     private int currentHP;
-    public Slider hpSlider;
-    public GameObject deathEffect; // Optional: A particle effect or animation on death
-    public List<string> currentStatusEffects;
-    public float followSpeed = 30f; // Speed at which the enemy follows the player
-    public int damagePerSecond = 10; // Damage inflicted per second while in collision
-    public float separationDistance = 2f; // Minimum distance between enemies to avoid merging
-    public float separationForce = 5f; // Force applied to separate enemies
+    public HPBar hpBar;
+    public GameObject deathEffect;
+    public List<string> currentStatusEffects = new List<string>();
+    public float followSpeed = 30f;
+    public int damagePerSecond = 10;
+    public float separationDistance = 2f;
+    public float separationForce = 5f;
     private Transform player;
     private GameManager gameManager;
     private bool isCollidingWithPlayer = false;
     private GameObject gameManagerObject;
-    private Rigidbody rb; // Add a reference to the Rigidbody
+    private Rigidbody rb;
     public GameObject electroVFX;
     public GameObject fireVFX;
     public GameObject nukeVFX;
-    private Coroutine electroDamageCoroutine; // To track the electro damage coroutine
-    private Coroutine fireDamageCoroutine; // To track the fire damage coroutine
+    private Coroutine electroDamageCoroutine;
+    private Coroutine fireDamageCoroutine;
+    private Coroutine damageCoroutine;
+    private bool isResting = false;
 
     void Start()
     {
@@ -38,17 +40,19 @@ public class Enemy : MonoBehaviour
         gameManagerObject = GameObject.FindGameObjectWithTag("GameManager");
         gameManager = gameManagerObject.GetComponent<GameManager>();
         currentHP = maxHP;
-        if (hpSlider != null)
+
+        if (hpBar != null)
         {
-            hpSlider.maxValue = maxHP;
-            hpSlider.value = currentHP;
+            hpBar.maxHP = maxHP;
+            hpBar.currentHP = currentHP;
+            hpBar.UpdateHPDisplay();
         }
+
         if (player == null)
         {
             Debug.LogError("Player Transform is not assigned in the Enemy script.");
         }
 
-        // Get the Rigidbody component
         rb = GetComponent<Rigidbody>();
         if (rb == null)
         {
@@ -64,42 +68,41 @@ public class Enemy : MonoBehaviour
 
     void Update()
     {
-        if (player != null && !gameManager.isPlayerDead && !stopFollowing)
+        if (player != null && !gameManager.isPlayerDead && !stopFollowing && !isResting)
         {
-            // Calculate direction ignoring the Y axis
             Vector3 direction = (new Vector3(player.position.x, transform.position.y, player.position.z) - transform.position).normalized;
-
-            // Move towards the player on X and Z axis only
             Vector3 newPosition = Vector3.MoveTowards(transform.position, new Vector3(player.position.x, transform.position.y, player.position.z), followSpeed * Time.deltaTime);
             transform.position = newPosition;
             Vector3 playerFace = (player.position - transform.position).normalized;
-            // Rotate to face the player, might want to adjust rotation to ignore Y axis differences if needed
             Quaternion lookRotation = Quaternion.LookRotation(playerFace);
             transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * followSpeed);
-
-            // Apply separation force
             ApplySeparation();
         }
+
         if (gameManager.isPlayerDead)
         {
             animator.SetBool("idle", true);
             FloatAwayFromPlayer();
         }
-        if (isCollidingWithPlayer)
+
+        if (isCollidingWithPlayer && damageCoroutine == null)
         {
-            // Inflict damage and play attack animation
-            InflictDamage();
+            animator.SetBool("isRunning", false);
+            damageCoroutine = StartCoroutine(InflictDamageOverTime());
         }
+
         if (currentStatusEffects.Contains("Fire") && currentStatusEffects.Contains("Electro"))
         {
             if (nukeVFX != null)
             {
                 InstantiateAndDestroyNukeVFX();
             }
+
             if (electroDamageCoroutine != null)
             {
                 StopCoroutine(electroDamageCoroutine);
             }
+
             if (fireDamageCoroutine != null)
             {
                 StopCoroutine(fireDamageCoroutine);
@@ -121,16 +124,7 @@ public class Enemy : MonoBehaviour
 
         while (timer > 0)
         {
-            currentHP -= 1;
-            if (hpSlider != null)
-            {
-                hpSlider.value = currentHP;
-            }
-            if (currentHP <= 0)
-            {
-                Die();
-                yield break;
-            }
+            TakeDamage(1);
             yield return new WaitForSeconds(1);
             timer -= 1f;
         }
@@ -141,13 +135,22 @@ public class Enemy : MonoBehaviour
         electroDamageCoroutine = null;
     }
 
-    void InflictDamage()
+    IEnumerator InflictDamageOverTime()
     {
-        // Assuming there's a method in PlayerController to decrease HP
+        while (isCollidingWithPlayer)
+        {
+            AttackPlayer();
+            yield return new WaitForSeconds(1);
+        }
+        damageCoroutine = null;
+    }
+
+    void AttackPlayer()
+    {
         var playerController = player.GetComponent<PlayerController>();
         if (playerController != null)
         {
-            playerController.hpBar.DecreaseHP(Mathf.FloorToInt(damagePerSecond * Time.deltaTime));
+            playerController.hpBar.DecreaseHP(damagePerSecond);
         }
         else
         {
@@ -159,14 +162,10 @@ public class Enemy : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Nuke"))
         {
-            currentHP -= 100;
-            if (hpSlider != null)
-            {
-                hpSlider.value = currentHP;
-            }
+            TakeDamage(100);
             if (currentHP <= 0)
             {
-                gameManager.TriggerNuke(); // Trigger the nuke event
+                gameManager.TriggerNuke();
                 Die();
             }
         }
@@ -189,43 +188,32 @@ public class Enemy : MonoBehaviour
         }
         else if (collision.gameObject.CompareTag("Fire Effect Inflicter"))
         {
-            if (electroDamageCoroutine != null)
+            if (fireDamageCoroutine != null)
             {
-                StopCoroutine(electroDamageCoroutine);
+                StopCoroutine(fireDamageCoroutine);
             }
             currentStatusEffects.Add("Fire");
             fireDamageCoroutine = StartCoroutine(TakeFireDamageFor5Seconds());
         }
     }
 
-
     IEnumerator TakeFireDamageFor5Seconds()
     {
-
+        fireStatusIcon.SetActive(true);
         float timer = 3f;
         fireVFX.SetActive(true);
-        fireStatusIcon.SetActive(true);
 
         while (timer > 0)
         {
-            currentHP -= 1;
-            if (hpSlider != null)
-            {
-                hpSlider.value = currentHP;
-            }
-            if (currentHP <= 0)
-            {
-                Die();
-                yield break;
-            }
+            TakeDamage(1);
             yield return new WaitForSeconds(1);
             timer -= 1f;
         }
 
         fireVFX.SetActive(false);
         currentStatusEffects.Remove("Fire");
-        fireDamageCoroutine = null;
         fireStatusIcon.SetActive(false);
+        fireDamageCoroutine = null;
     }
 
     void OnCollisionExit(Collision collision)
@@ -239,9 +227,10 @@ public class Enemy : MonoBehaviour
     public void TakeDamage(int damage)
     {
         currentHP -= damage;
-        if (hpSlider != null)
+        if (hpBar != null)
         {
-            hpSlider.value = currentHP;
+            hpBar.currentHP = currentHP;
+            hpBar.UpdateHPDisplay();
         }
 
         if (currentHP <= 0)
@@ -255,7 +244,7 @@ public class Enemy : MonoBehaviour
         if (deathEffect != null)
         {
             GameObject effect = Instantiate(deathEffect, transform.position, transform.rotation);
-            Destroy(effect, 2f); // Destroy the deathEffect after 2 seconds
+            Destroy(effect, 2f);
         }
 
         Destroy(gameObject);
@@ -266,7 +255,7 @@ public class Enemy : MonoBehaviour
         if (rb != null && player != null)
         {
             Vector3 pushDirection = (transform.position - player.position).normalized;
-            rb.AddForce(pushDirection * 10f, ForceMode.Impulse); // Adjust the force value as needed
+            rb.AddForce(pushDirection * 10f, ForceMode.Impulse);
         }
     }
 

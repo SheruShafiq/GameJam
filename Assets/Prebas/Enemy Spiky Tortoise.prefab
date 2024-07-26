@@ -329,6 +329,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2833156538417790536, guid: a7c53c1fcd3534a449da1997eacd6ae3,
         type: 3}
+      propertyPath: hpBar
+      value: 
+      objectReference: {fileID: 8742380188995420556}
+    - target: {fileID: 2833156538417790536, guid: a7c53c1fcd3534a449da1997eacd6ae3,
+        type: 3}
       propertyPath: fireVFX
       value: 
       objectReference: {fileID: 3421527025961067986}
@@ -516,3 +521,15 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 9205659704531380471}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &8742380188995420556 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 473509957724301691, guid: a7c53c1fcd3534a449da1997eacd6ae3,
+    type: 3}
+  m_PrefabInstance: {fileID: 9205659704531380471}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e239bd56fab98da4c8bdd4ab7e39ea0a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

@@ -12,7 +12,7 @@ public class BossEnemyV1 : MonoBehaviour
     private int currentHP;
     public Slider hpSlider;
     public GameObject deathEffect;
-    public List<string> currentStatusEffects;
+    public List<string> currentStatusEffects = new List<string>();
     public float followSpeed = 30f;
     public int damage = 10;
     public float separationDistance = 2f;
@@ -29,15 +29,19 @@ public class BossEnemyV1 : MonoBehaviour
     private Coroutine fireDamageCoroutine;
     private bool isResting = false;
     private bool stopFollowing = false;
+    public HPBar hpBar;
 
     void Start()
     {
         currentHP = maxHP;
-        if (hpSlider != null)
+
+        if (hpBar != null)
         {
-            hpSlider.maxValue = maxHP;
-            hpSlider.value = currentHP;
+            hpBar.maxHP = maxHP;
+            hpBar.currentHP = currentHP;
+            hpBar.UpdateHPDisplay();
         }
+
         player = GameObject.FindGameObjectWithTag("Player").transform;
         if (player == null)
         {
@@ -56,24 +60,22 @@ public class BossEnemyV1 : MonoBehaviour
             Debug.LogError("Rigidbody component is not assigned or found in the Boss.");
         }
 
-        // Initialize HPBar
-        HPBar hpBar = GetComponent<HPBar>();
-        if (hpBar != null)
-        {
-            hpBar.maxHP = maxHP;
-            hpBar.currentHP = currentHP;
-            hpBar.UpdateHPDisplay();
-        }
-
         StartCoroutine(FollowPlayerCoroutine());
     }
 
     void Update()
     {
+        if (hpBar != null)
+        {
+            hpBar.currentHP = currentHP;
+            hpBar.UpdateHPDisplay();
+        }
+
         if (isResting)
         {
             animator.SetBool("isRunning", false);
         }
+
         if (player != null && !gameManager.isPlayerDead && !isResting)
         {
             float distance = Vector3.Distance(transform.position, player.position);
@@ -101,6 +103,10 @@ public class BossEnemyV1 : MonoBehaviour
                 InstantiateAndDestroyNukeVFX();
                 currentStatusEffects.Remove("Fire");
                 currentStatusEffects.Remove("Electro");
+                fireStatusIcon.SetActive(false);
+                electroStatusIcon.SetActive(false);
+                electroVFX.SetActive(false);
+                fireVFX.SetActive(false);
             }
             if (electroDamageCoroutine != null)
             {
@@ -179,8 +185,7 @@ public class BossEnemyV1 : MonoBehaviour
 
             animator.SetTrigger("takeDamage");
 
-            currentHP -= 100;
-            UpdateHP();
+            TakeDamage(100);
 
             gameManager.TriggerNuke();
         }
@@ -199,9 +204,9 @@ public class BossEnemyV1 : MonoBehaviour
         }
         else if (collision.gameObject.CompareTag("Fire Effect Inflicter"))
         {
-            if (electroDamageCoroutine != null)
+            if (fireDamageCoroutine != null)
             {
-                StopCoroutine(electroDamageCoroutine);
+                StopCoroutine(fireDamageCoroutine);
             }
             currentStatusEffects.Add("Fire");
             fireDamageCoroutine = StartCoroutine(TakeFireDamageFor5Seconds());
@@ -234,7 +239,6 @@ public class BossEnemyV1 : MonoBehaviour
             hpSlider.value = currentHP;
         }
 
-        HPBar hpBar = GetComponent<HPBar>();
         if (hpBar != null)
         {
             hpBar.currentHP = currentHP;
@@ -274,14 +278,7 @@ public class BossEnemyV1 : MonoBehaviour
 
         while (timer > 0)
         {
-            currentHP -= 1;
-            UpdateHP();
-
-            if (currentHP <= 0)
-            {
-                Die();
-                yield break;
-            }
+            TakeDamage(1);
             yield return new WaitForSeconds(1);
             timer -= 1f;
         }
@@ -300,14 +297,7 @@ public class BossEnemyV1 : MonoBehaviour
 
         while (timer > 0)
         {
-            currentHP -= 1;
-            UpdateHP();
-
-            if (currentHP <= 0)
-            {
-                Die();
-                yield break;
-            }
+            TakeDamage(1);
             yield return new WaitForSeconds(1);
             timer -= 1f;
         }
