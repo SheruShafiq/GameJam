@@ -9,6 +9,8 @@ public class Enemy : MonoBehaviour
     private bool stopFollowing;
     public Animator animator;
     public int maxHP = 100;
+    public GameObject fireStatusIcon;
+    public GameObject electroStatusIcon;
     private int currentHP;
     public Slider hpSlider;
     public GameObject deathEffect; // Optional: A particle effect or animation on death
@@ -113,7 +115,8 @@ public class Enemy : MonoBehaviour
 
     IEnumerator TakeElectroDamageFor5Seconds()
     {
-        float timer = 5f;
+        electroStatusIcon.SetActive(true);
+        float timer = 3f;
         electroVFX.SetActive(true);
 
         while (timer > 0)
@@ -134,6 +137,7 @@ public class Enemy : MonoBehaviour
 
         electroVFX.SetActive(false);
         currentStatusEffects.Remove("Electro");
+        electroStatusIcon.SetActive(false);
         electroDamageCoroutine = null;
     }
 
@@ -197,8 +201,10 @@ public class Enemy : MonoBehaviour
 
     IEnumerator TakeFireDamageFor5Seconds()
     {
-        float timer = 5f;
+
+        float timer = 3f;
         fireVFX.SetActive(true);
+        fireStatusIcon.SetActive(true);
 
         while (timer > 0)
         {
@@ -219,6 +225,7 @@ public class Enemy : MonoBehaviour
         fireVFX.SetActive(false);
         currentStatusEffects.Remove("Fire");
         fireDamageCoroutine = null;
+        fireStatusIcon.SetActive(false);
     }
 
     void OnCollisionExit(Collision collision)

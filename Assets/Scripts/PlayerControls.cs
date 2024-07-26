@@ -4,12 +4,15 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     public Camera camera;
+
     public float moveSpeed = 5f;
     public float knockBackSpeed = 5.0f;
     public float sprintSpeed = 10f;
     public float turnSpeed = 300f;
     public float acceleration = 5f;
     private float currentSpeed;
+    public UISelectedFrameScript uiElement;
+    public Transform target1;
     private Animator animator;
     public GameObject sprintingSfx;
     public GameObject quickAttackBase;
@@ -17,6 +20,7 @@ public class PlayerController : MonoBehaviour
     private bool Attacking = false;
     private bool quickAttackCooldown = false;
     private bool throwPotionCooldown = false;
+    public GameObject selectedPotionUI;
     public GameObject walkingSfx;
     public GameObject quickAttackSfx;
     public GameObject HealingPotionObject;
@@ -32,11 +36,18 @@ public class PlayerController : MonoBehaviour
     public GameObject electroPotion; // The object to be thrown
     public GameObject electroEffect; // The object to replace the thrown object
     public float throwForce = 10f; // The force with which the object is thrown
-
+    private Animator uiAnimator;
     public GameManager gameManager;
 
     void Start()
     {
+        if (hpBar != null)
+        {
+            hpBar.maxHP = 100; // Set this to the player's max HP
+            hpBar.currentHP = hpBar.maxHP;
+            hpBar.UpdateHPDisplay();
+        }
+        uiAnimator = selectedPotionUI.GetComponent<Animator>();
         throwableObject = firePotion;
         replacementObject = fireEffect;
         quickAttackCooldown = true;
@@ -74,43 +85,57 @@ public class PlayerController : MonoBehaviour
         {
             Vector3 targetPosition = new Vector3(transform.position.x - 5, transform.position.y, transform.position.z - 5);
             transform.position = Vector3.MoveTowards(transform.position, targetPosition, knockBackSpeed * Time.deltaTime);
-            hpBar.DecreaseHP(10); // Decrease the player's HP by 10 points
             animator.SetTrigger("isHit");
-            if (hpBar.currentHP <= 0)
-            {
-                quickAttackBase.SetActive(false);
-                quickAttackSfx.SetActive(false);
-                animator.SetBool("isDead", true);
-                walkingSfx.SetActive(false);
-                sprintingSfx.SetActive(false);
-                if (quickAttackCooldownCoroutine != null)
-                {
-                    StopCoroutine(quickAttackCooldownCoroutine);
-                }
-                if (throwPotionCooldownCoroutine != null)
-                {
-                    StopCoroutine(throwPotionCooldownCoroutine);
-                }
-                if (gameManager != null)
-                {
-                    gameManager.isPlayerDead = true;
-                }
-            }
         }
     }
 
     void Update()
     {
+        if (hpBar.currentHP <= 0)
+        {
+            quickAttackBase.SetActive(false);
+            quickAttackSfx.SetActive(false);
+            animator.SetBool("isDead", true);
+            walkingSfx.SetActive(false);
+            sprintingSfx.SetActive(false);
+            if (quickAttackCooldownCoroutine != null)
+            {
+                StopCoroutine(quickAttackCooldownCoroutine);
+            }
+            if (throwPotionCooldownCoroutine != null)
+            {
+                StopCoroutine(throwPotionCooldownCoroutine);
+            }
+            if (gameManager != null)
+            {
+                gameManager.isPlayerDead = true;
+            }
+            return; // Prevent further actions if the player is dead
+        }
+
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
+            if (throwableObject == firePotion && replacementObject == fireEffect)
+            {
+                return;
+            }
+            uiAnimator.SetBool("onClick2", false);
+            uiAnimator.SetBool("onClick1", true);
             throwableObject = firePotion;
             replacementObject = fireEffect;
         }
         if (Input.GetKeyDown(KeyCode.Alpha2))
         {
+            if (throwableObject == electroPotion && replacementObject == electroEffect)
+            {
+                return;
+            }
+            uiAnimator.SetBool("onClick1", false);
+            uiAnimator.SetBool("onClick2", true);
             throwableObject = electroPotion;
             replacementObject = electroEffect;
         }
+
         if (hpBar.currentHP <= 0)
         {
             return; // Prevent movement if HP is 0 or less
@@ -339,7 +364,6 @@ public class PlayerController : MonoBehaviour
         return velocity;
     }
 }
-
 public class ThrowableObject : MonoBehaviour
 {
     private GameObject replacementObject;

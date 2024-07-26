@@ -8,7 +8,7 @@ public class HPBar : MonoBehaviour
 {
     public UnityEvent onHPDepleted;
 
-    [Range(0, 100)]
+    [Range(0, 5000)]
     public int maxHP = 100;
     public int currentHP;
 
@@ -30,7 +30,7 @@ public class HPBar : MonoBehaviour
 
     private void Awake()
     {
-        currentHP = maxHP;
+        // Do not set default maxHP and currentHP values here; they should be set by PlayerController or BossEnemyV1
         if (!standardText && GetComponent<Text>())
         {
             standardText = GetComponent<Text>();
@@ -46,15 +46,6 @@ public class HPBar : MonoBehaviour
         if (!dialSlider && GetComponent<Image>())
         {
             dialSlider = GetComponent<Image>();
-        }
-        if (standardSlider)
-        {
-            standardSlider.maxValue = maxHP;
-            standardSlider.value = currentHP;
-        }
-        if (dialSlider)
-        {
-            dialSlider.fillAmount = 1f;
         }
         UpdateHPDisplay();
     }
@@ -80,10 +71,11 @@ public class HPBar : MonoBehaviour
         UpdateHPDisplay();
     }
 
-    private void UpdateHPDisplay()
+    public void UpdateHPDisplay()
     {
         if (standardSlider)
         {
+            standardSlider.maxValue = maxHP;
             standardSlider.value = currentHP;
         }
         if (dialSlider)

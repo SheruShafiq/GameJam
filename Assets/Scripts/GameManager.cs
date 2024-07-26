@@ -27,7 +27,7 @@ public class GameManager : MonoBehaviour
     public float potionSpawnRangeZ = 20f;
     public int potionBaseSpawnCount = 1;
 
-    private int currentLvl = 1;
+    public int currentLvl = 1;
     private bool isSpawningEnemies = false; // Flag to control spawning
 
     void Start()
