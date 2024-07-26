@@ -87,7 +87,6 @@ public class Enemy : MonoBehaviour
 
         if (isCollidingWithPlayer && damageCoroutine == null)
         {
-            animator.SetBool("isRunning", false);
             damageCoroutine = StartCoroutine(InflictDamageOverTime());
         }
 

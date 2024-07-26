@@ -1102,7 +1102,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &446799271
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3333,95 +3333,6 @@ Transform:
   - {fileID: 1723819426}
   m_Father: {fileID: 1412446045}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &1977313317
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 4076361492741452062, guid: 0fe273f79ba0b47b2aeb45e526966140,
-        type: 3}
-      propertyPath: m_Name
-      value: Enemy Spiky Tortoise
-      objectReference: {fileID: 0}
-    - target: {fileID: 4076361492741452062, guid: 0fe273f79ba0b47b2aeb45e526966140,
-        type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4724596856101009583, guid: 0fe273f79ba0b47b2aeb45e526966140,
-        type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4724596856101009583, guid: 0fe273f79ba0b47b2aeb45e526966140,
-        type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4999040623325423958, guid: 0fe273f79ba0b47b2aeb45e526966140,
-        type: 3}
-      propertyPath: m_LocalPosition.x
-      value: -1341.083
-      objectReference: {fileID: 0}
-    - target: {fileID: 4999040623325423958, guid: 0fe273f79ba0b47b2aeb45e526966140,
-        type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 2.08
-      objectReference: {fileID: 0}
-    - target: {fileID: 4999040623325423958, guid: 0fe273f79ba0b47b2aeb45e526966140,
-        type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -3.5129519
-      objectReference: {fileID: 0}
-    - target: {fileID: 4999040623325423958, guid: 0fe273f79ba0b47b2aeb45e526966140,
-        type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4999040623325423958, guid: 0fe273f79ba0b47b2aeb45e526966140,
-        type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4999040623325423958, guid: 0fe273f79ba0b47b2aeb45e526966140,
-        type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4999040623325423958, guid: 0fe273f79ba0b47b2aeb45e526966140,
-        type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4999040623325423958, guid: 0fe273f79ba0b47b2aeb45e526966140,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4999040623325423958, guid: 0fe273f79ba0b47b2aeb45e526966140,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4999040623325423958, guid: 0fe273f79ba0b47b2aeb45e526966140,
-        type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6381730853160998591, guid: 0fe273f79ba0b47b2aeb45e526966140,
-        type: 3}
-      propertyPath: deathEffect
-      value: 
-      objectReference: {fileID: 6126188424833946103, guid: 733c020b3dd871140b939efd101e3323,
-        type: 3}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 0fe273f79ba0b47b2aeb45e526966140, type: 3}
 --- !u!1 &1996081333
 GameObject:
   m_ObjectHideFlags: 0
@@ -51646,4 +51557,3 @@ SceneRoots:
   - {fileID: 6469071354395968962}
   - {fileID: 483697318}
   - {fileID: 446799272}
-  - {fileID: 1977313317}

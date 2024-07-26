@@ -2042,22 +2042,25 @@ MonoBehaviour:
       m_Calls: []
   m_text: 'WASD to move
 
-    Q for special move
-
     SHIFT to sprint
 
-    Press 1
-    to use fire potion
+    Q for basic attack
 
-    Press 2 to use Electric potion
+    Left Mouse
+    Button to throw selected potion.
 
-    Inflict Electric
-    and Burning damage at the same time
+    Press 1 to use fire potion
 
-    to trigger a NUKE!
+    Press 2
+    to use Electric potion
 
-    Nuke will double
-    your cooldown.'
+    Inflict Electric and Burning damage at the same time
+
+    to
+    trigger a Overload!!
+
+    Triggering overload will double your cooldown for throwing
+    potions.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
