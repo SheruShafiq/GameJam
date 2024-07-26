@@ -27,7 +27,7 @@ public class GameManager : MonoBehaviour
     public float potionSpawnRangeX = 20f;
     public float potionSpawnRangeZ = 20f;
     public int potionBaseSpawnCount = 1;
-
+public GameObject nukeTriggeredUi;
     public int currentLvl = 1;
     private bool isSpawningEnemies = false; // Flag to control spawning
 
@@ -92,6 +92,14 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
+        if(isNukeTriggered)
+        {
+            nukeTriggeredUi.SetActive(true);
+        }
+        else
+        {
+            nukeTriggeredUi.SetActive(false);
+        }
         if (isPlayerDead)
         {
             deathHud.SetActive(true);
@@ -112,12 +120,12 @@ public class GameManager : MonoBehaviour
     public void TriggerNuke()
     {
         isNukeTriggered = true;
-        StartCoroutine(resetNuke());
+        // StartCoroutine(resetNuke());
     }
 
     IEnumerator resetNuke()
     {
-        yield return new WaitForSeconds(6);
+        yield return new WaitForSeconds(4);
         isNukeTriggered = false;
     }
     IEnumerator AllEnemiesKilled()

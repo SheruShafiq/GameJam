@@ -1,4 +1,6 @@
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -29,21 +31,32 @@ public class PlayerController : MonoBehaviour
     public Timer throwPotionTimer;
     private Coroutine quickAttackCooldownCoroutine;
     private Coroutine throwPotionCooldownCoroutine;
-    private GameObject throwableObject; // The object to be thrown
-    private GameObject replacementObject; // The object to replace the thrown object
-    public GameObject firePotion; // The object to be thrown
+    private GameObject throwableObject;
+    private GameObject replacementObject;
+    public GameObject firePotion;
     public GameObject fireEffect;
-    public GameObject electroPotion; // The object to be thrown
-    public GameObject electroEffect; // The object to replace the thrown object
-    public float throwForce = 10f; // The force with which the object is thrown
+    public GameObject electroPotion;
+    public GameObject electroEffect;
+    public float throwForce = 10f;
     private Animator uiAnimator;
     public GameManager gameManager;
+
+    public GameObject fireStatusIcon;
+    public GameObject electroStatusIcon;
+
+    public GameObject fireVFX;
+    public GameObject electroVFX;
+    public GameObject nukeVFX;
+    public List<string> currentStatusEffects = new List<string>();
+    private Coroutine fireDamageCoroutine;
+    private Coroutine electroDamageCoroutine;
+    private bool isSprinting;
 
     void Start()
     {
         if (hpBar != null)
         {
-            hpBar.maxHP = 100; // Set this to the player's max HP
+            hpBar.maxHP = 100;
             hpBar.currentHP = hpBar.maxHP;
             hpBar.UpdateHPDisplay();
         }
@@ -65,52 +78,36 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    IEnumerator TurnOffHealingParticleAuraIn4Sec()
-    {
-        yield return new WaitForSeconds(4);
-        onHealingParticleFX.SetActive(false);
-    }
-
-    void OnCollisionEnter(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("HealingPotion"))
-        {
-            StartCoroutine(TurnOffHealingParticleAuraIn4Sec());
-            onHealingParticleFX.SetActive(true);
-            Destroy(collision.gameObject);
-            hpBar.IncreaseHP(20); // Heal the player by 20 points
-        }
-
-        if (collision.gameObject.CompareTag("Enemy"))
-        {
-            Vector3 targetPosition = new Vector3(transform.position.x - 5, transform.position.y, transform.position.z - 5);
-            transform.position = Vector3.MoveTowards(transform.position, targetPosition, knockBackSpeed * Time.deltaTime);
-            animator.SetTrigger("isHit");
-        }
-    }
-
     void Update()
     {
+        hpBar.UpdateHPDisplay();
         if (hpBar.currentHP <= 0)
         {
-            quickAttackBase.SetActive(false);
-            quickAttackSfx.SetActive(false);
-            animator.SetBool("isDead", true);
-            walkingSfx.SetActive(false);
-            sprintingSfx.SetActive(false);
-            if (quickAttackCooldownCoroutine != null)
+            HandleDeath();
+            return;
+        }
+        
+
+        if (currentStatusEffects.Contains("Fire") && currentStatusEffects.Contains("Electro"))
+        {
+            if (nukeVFX != null && GameObject.FindGameObjectsWithTag("Nuke").Length == 0)
             {
-                StopCoroutine(quickAttackCooldownCoroutine);
+                InstantiateAndDestroyNukeVFX();
             }
-            if (throwPotionCooldownCoroutine != null)
+
+            if (electroDamageCoroutine != null)
             {
-                StopCoroutine(throwPotionCooldownCoroutine);
+                StopCoroutine(electroDamageCoroutine);
             }
-            if (gameManager != null)
+
+            if (fireDamageCoroutine != null)
             {
-                gameManager.isPlayerDead = true;
+                StopCoroutine(fireDamageCoroutine);
             }
-            return; // Prevent further actions if the player is dead
+            currentStatusEffects.Remove("Fire");
+            currentStatusEffects.Remove("Electro");
+            fireStatusIcon.SetActive(false);
+            electroStatusIcon.SetActive(false);
         }
 
         if (Input.GetKeyDown(KeyCode.Alpha1))
@@ -136,19 +133,19 @@ public class PlayerController : MonoBehaviour
             replacementObject = electroEffect;
         }
 
-        if (hpBar.currentHP <= 0)
-        {
-            return; // Prevent movement if HP is 0 or less
-        }
-
         if (Input.GetKeyDown(KeyCode.Q) && !quickAttackCooldown)
         {
             PerformQuickAttack();
         }
 
-        if (Input.GetMouseButtonDown(0) && !throwPotionCooldown) // Left mouse button pressed
+        if (Input.GetMouseButtonDown(0) && !throwPotionCooldown)
         {
             PerformThrowPotion();
+        }
+
+        if (Input.GetMouseButton(1))
+        {
+            PerformDrinkPotion();
         }
 
         float moveHorizontal = Input.GetAxis("Horizontal");
@@ -162,7 +159,7 @@ public class PlayerController : MonoBehaviour
         }
 
         bool isMoving = movement.magnitude > 0;
-        bool isSprinting = Input.GetKey(KeyCode.LeftShift) && isMoving;
+         isSprinting = Input.GetKey(KeyCode.LeftShift) && isMoving;
         if (isMoving)
         {
             walkingSfx.SetActive(true);
@@ -202,6 +199,49 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    void HandleDeath()
+    {
+        quickAttackBase.SetActive(false);
+        quickAttackSfx.SetActive(false);
+        animator.SetBool("isDead", true);
+        walkingSfx.SetActive(false);
+        sprintingSfx.SetActive(false);
+        if (quickAttackCooldownCoroutine != null)
+        {
+            StopCoroutine(quickAttackCooldownCoroutine);
+        }
+        if (throwPotionCooldownCoroutine != null)
+        {
+            StopCoroutine(throwPotionCooldownCoroutine);
+        }
+        if (gameManager != null)
+        {
+            gameManager.isPlayerDead = true;
+        }
+    }
+
+    void InstantiateAndDestroyNukeVFX()
+    {
+        if (gameManager.isNukeTriggered)
+        {
+            return;
+        }
+
+        GameObject nukeEffect = Instantiate(nukeVFX, transform.position, transform.rotation);
+        TakeDamage(90);
+        Destroy(nukeEffect, 2f);
+        hpBar.UpdateHPDisplay();
+        gameManager.isNukeTriggered = true;
+        currentStatusEffects.Remove("Fire");
+        currentStatusEffects.Remove("Electro");
+        fireStatusIcon.SetActive(false);
+        electroStatusIcon.SetActive(false);
+        fireVFX.SetActive(false);
+        electroVFX.SetActive(false);
+        StopCoroutine(fireDamageCoroutine);
+        StopCoroutine(electroDamageCoroutine);
+    }
+
     void PerformQuickAttack()
     {
         quickAttackCooldown = true;
@@ -225,7 +265,7 @@ public class PlayerController : MonoBehaviour
         int cooldownDuration = 2;
         if (gameManager.isNukeTriggered)
         {
-            cooldownDuration *= 2;
+            cooldownDuration *= 5;
         }
         if (quickAttackTimer != null)
         {
@@ -261,12 +301,103 @@ public class PlayerController : MonoBehaviour
         throwPotionCooldownCoroutine = StartCoroutine(ThrowPotionCoolDown());
     }
 
+    void PerformDrinkPotion()
+    {
+        if (throwableObject == firePotion)
+        {
+            ApplyFireEffect();
+        }
+        else if (throwableObject == electroPotion)
+        {
+            ApplyElectroEffect();
+        }
+    }
+
+    void ApplyFireEffect()
+    {
+        if (!currentStatusEffects.Contains("Fire"))
+        {
+            currentStatusEffects.Add("Fire");
+            fireDamageCoroutine = StartCoroutine(TakeFireDamageFor5Seconds());
+        }
+    }
+
+    void ApplyElectroEffect()
+    {
+        if (!currentStatusEffects.Contains("Electro") && !gameManager.isNukeTriggered)
+        {
+            currentStatusEffects.Add("Electro");
+            electroDamageCoroutine = StartCoroutine(ElectroStatusEffect());
+        }
+    }
+
+    IEnumerator TakeFireDamageFor5Seconds()
+    {
+        fireStatusIcon.SetActive(true);
+        float timer = 5f;
+        fireVFX.SetActive(true);
+
+        while (timer > 0)
+        {
+            TakeDamage(1);
+            yield return new WaitForSeconds(1);
+            timer -= 1f;
+        }
+
+        fireVFX.SetActive(false);
+        currentStatusEffects.Remove("Fire");
+        fireStatusIcon.SetActive(false);
+        fireDamageCoroutine = null;
+    }
+
+    IEnumerator ElectroStatusEffect()
+    {
+        if (electroDamageCoroutine != null)
+        {
+            StopCoroutine(electroDamageCoroutine);
+        }
+
+        electroStatusIcon.SetActive(true);
+        float timer = 5f;
+        electroVFX.SetActive(true);
+
+        sprintSpeed *= 2;
+        turnSpeed *= 2;
+        acceleration *= 2;
+
+        while (timer > 0)
+        {
+            TakeDamage(1);
+            yield return new WaitForSeconds(1);
+            timer -= 1f;
+        }
+
+        sprintSpeed = 10f;
+        turnSpeed = 300f;
+        acceleration = 5f;
+isSprinting = false;
+        electroVFX.SetActive(false);
+        currentStatusEffects.Remove("Electro");
+        electroStatusIcon.SetActive(false);
+        electroDamageCoroutine = null;
+    }
+
+    public void TakeDamage(int damage)
+    {
+        if (hpBar != null)
+        {
+            hpBar.DecreaseHP(damage);
+            hpBar.UpdateHPDisplay();
+        }
+    }
+
     IEnumerator ThrowPotionCoolDown()
     {
-        int cooldownDuration = 1;
+        int cooldownDuration = 2;
         if (gameManager.isNukeTriggered)
         {
             cooldownDuration *= 2;
+            gameManager.isNukeTriggered = false;
         }
         if (throwPotionTimer != null)
         {
@@ -310,12 +441,11 @@ public class PlayerController : MonoBehaviour
         Ray ray = camera.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
-            Vector3 spawnPosition = transform.position; // Spawn at player's position
+            Vector3 spawnPosition = transform.position;
             GameObject thrownObject = Instantiate(throwableObject, spawnPosition, Quaternion.identity);
             ThrowableObject throwableObjScript = thrownObject.AddComponent<ThrowableObject>();
             throwableObjScript.Initialize(replacementObject);
 
-            // Calculate the throw direction
             Vector3 targetPoint = hit.point;
             Vector3 throwDirection = CalculateThrowDirection(spawnPosition, targetPoint);
 
@@ -337,7 +467,7 @@ public class PlayerController : MonoBehaviour
     Vector3 CalculateThrowDirection(Vector3 start, Vector3 target)
     {
         Vector3 direction = target - start;
-        direction.y = 0; // Ignore vertical distance for horizontal throw direction
+        direction.y = 0;
 
         float distance = direction.magnitude;
         direction.Normalize();
@@ -346,16 +476,15 @@ public class PlayerController : MonoBehaviour
 
         if (heightDifference < 0)
         {
-            heightDifference = 0; // Prevent negative height differences
+            heightDifference = 0;
         }
 
-        // Calculate the initial velocity needed to reach the target
         float initialVelocityY = Mathf.Sqrt(2 * Mathf.Abs(Physics.gravity.y) * heightDifference);
         float timeToReachTarget = distance / throwForce;
 
         if (float.IsInfinity(timeToReachTarget) || float.IsNaN(timeToReachTarget) || timeToReachTarget <= 0)
         {
-            timeToReachTarget = 1; // Set a default time if the calculation is invalid
+            timeToReachTarget = 1;
         }
 
         Vector3 velocity = direction * throwForce;
@@ -364,6 +493,7 @@ public class PlayerController : MonoBehaviour
         return velocity;
     }
 }
+
 public class ThrowableObject : MonoBehaviour
 {
     private GameObject replacementObject;
@@ -392,6 +522,6 @@ public class ThrowableObject : MonoBehaviour
         Vector3 replacementPosition = transform.position;
         Destroy(gameObject);
         GameObject replacement = Instantiate(replacementObject, replacementPosition, Quaternion.identity);
-        Destroy(replacement, 4f); // Destroy the replacement object after 5 seconds
+        Destroy(replacement, 4f);
     }
 }
