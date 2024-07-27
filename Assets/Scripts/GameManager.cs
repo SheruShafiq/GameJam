@@ -9,7 +9,7 @@ public class GameManager : MonoBehaviour
     public GameObject levelupUI;
     public GameObject BossEnemyV1;
 
-    public GameObject tutorialText;
+    // public GameObject tutorialText;
     public bool isPlayerDead = false;
     public GameObject defaultHud;
     public GameObject deathHud;
@@ -112,7 +112,7 @@ public class GameManager : MonoBehaviour
         if (GameObject.FindGameObjectsWithTag("Enemy").Length == 0 && !isSpawningEnemies)
         {
             isSpawningEnemies = true;
-            tutorialText.SetActive(false);
+            // tutorialText.SetActive(false);
             levelupUI.SetActive(true);
             StartCoroutine(AllEnemiesKilled());
         }
@@ -133,7 +133,7 @@ public class GameManager : MonoBehaviour
     {
         yield return new WaitForSeconds(5);
         levelupUI.SetActive(false);
-        tutorialText.SetActive(true);
+        // tutorialText.SetActive(true);
         currentLvl++;
         Debug.Log("Level Up: " + currentLvl);
         SpawnEnemies();
