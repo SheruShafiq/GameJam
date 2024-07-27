@@ -6,7 +6,6 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     public Camera camera;
-
     public float moveSpeed = 5f;
     public float knockBackSpeed = 5.0f;
     public float sprintSpeed = 10f;
@@ -25,7 +24,7 @@ public class PlayerController : MonoBehaviour
     public GameObject selectedPotionUI;
     public GameObject walkingSfx;
     public GameObject quickAttackSfx;
-    public GameObject HealingPotionObject;
+    public GameObject HealingPotionObject;  // New Healing Potion object
     public HPBar hpBar;
     public Timer quickAttackTimer;
     public Timer throwPotionTimer;
@@ -40,10 +39,8 @@ public class PlayerController : MonoBehaviour
     public float throwForce = 10f;
     private Animator uiAnimator;
     public GameManager gameManager;
-
     public GameObject fireStatusIcon;
     public GameObject electroStatusIcon;
-
     public GameObject fireVFX;
     public GameObject electroVFX;
     public GameObject nukeVFX;
@@ -51,7 +48,8 @@ public class PlayerController : MonoBehaviour
     private Coroutine fireDamageCoroutine;
     private Coroutine electroDamageCoroutine;
     private bool isSprinting;
-
+    public GameObject healingVFX;
+    private bool isHealing = false;
     void Start()
     {
         if (hpBar != null)
@@ -60,7 +58,7 @@ public class PlayerController : MonoBehaviour
             hpBar.currentHP = hpBar.maxHP;
             hpBar.UpdateHPDisplay();
         }
-        uiAnimator = selectedPotionUI.GetComponent<Animator>();
+
         throwableObject = firePotion;
         replacementObject = fireEffect;
         quickAttackCooldown = true;
@@ -86,7 +84,6 @@ public class PlayerController : MonoBehaviour
             HandleDeath();
             return;
         }
-        
 
         if (currentStatusEffects.Contains("Fire") && currentStatusEffects.Contains("Electro"))
         {
@@ -108,6 +105,12 @@ public class PlayerController : MonoBehaviour
             currentStatusEffects.Remove("Electro");
             fireStatusIcon.SetActive(false);
             electroStatusIcon.SetActive(false);
+            StopCoroutine(fireDamageCoroutine);
+            StopCoroutine(electroDamageCoroutine);
+            fireVFX.SetActive(false);
+            electroVFX.SetActive(false);
+
+
         }
 
         if (Input.GetKeyDown(KeyCode.Alpha1))
@@ -116,10 +119,9 @@ public class PlayerController : MonoBehaviour
             {
                 return;
             }
-            uiAnimator.SetBool("onClick2", false);
-            uiAnimator.SetBool("onClick1", true);
             throwableObject = firePotion;
             replacementObject = fireEffect;
+            selectedPotionUI.transform.position = new Vector3(140, selectedPotionUI.transform.position.y, selectedPotionUI.transform.position.z);
         }
         if (Input.GetKeyDown(KeyCode.Alpha2))
         {
@@ -127,10 +129,19 @@ public class PlayerController : MonoBehaviour
             {
                 return;
             }
-            uiAnimator.SetBool("onClick1", false);
-            uiAnimator.SetBool("onClick2", true);
             throwableObject = electroPotion;
             replacementObject = electroEffect;
+            selectedPotionUI.transform.position = new Vector3(280, selectedPotionUI.transform.position.y, selectedPotionUI.transform.position.z);
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha3))
+        {
+            if (throwableObject == HealingPotionObject)
+            {
+                return;
+            }
+            throwableObject = HealingPotionObject;
+            replacementObject = healingVFX;  // No replacement effect for healing potion
+            selectedPotionUI.transform.position = new Vector3(420, selectedPotionUI.transform.position.y, selectedPotionUI.transform.position.z);
         }
 
         if (Input.GetKeyDown(KeyCode.Q) && !quickAttackCooldown)
@@ -159,7 +170,8 @@ public class PlayerController : MonoBehaviour
         }
 
         bool isMoving = movement.magnitude > 0;
-         isSprinting = Input.GetKey(KeyCode.LeftShift) && isMoving;
+        isSprinting = Input.GetKey(KeyCode.LeftShift) && isMoving;
+
         if (isMoving)
         {
             walkingSfx.SetActive(true);
@@ -168,18 +180,12 @@ public class PlayerController : MonoBehaviour
         {
             walkingSfx.SetActive(false);
         }
+
         if (isSprinting)
         {
             walkingSfx.SetActive(false);
             sprintingSfx.SetActive(true);
-            if (currentSpeed < sprintSpeed)
-            {
-                currentSpeed += acceleration * Time.deltaTime;
-                if (currentSpeed > sprintSpeed)
-                {
-                    currentSpeed = sprintSpeed;
-                }
-            }
+            currentSpeed = Mathf.Min(currentSpeed + acceleration * Time.deltaTime, sprintSpeed);
         }
         else
         {
@@ -300,6 +306,38 @@ public class PlayerController : MonoBehaviour
         }
         throwPotionCooldownCoroutine = StartCoroutine(ThrowPotionCoolDown());
     }
+    // on collision enter with healing potion
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("HealingPotion"))
+        {
+            if (hpBar != null && !isHealing)
+            {
+                HealingPotionZoneEffect();
+            }
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.CompareTag("HealingPotion"))
+        {
+            StopHealingPotionZoneEffect();
+        }
+    }
+
+    private void HealingPotionZoneEffect()
+    {
+        isHealing = true;
+        InvokeRepeating("HealPlayer", 0, 1);
+    }
+
+    private void StopHealingPotionZoneEffect()
+    {
+        isHealing = false;
+        CancelInvoke("HealPlayer");
+    }
+
 
     void PerformDrinkPotion()
     {
@@ -310,6 +348,22 @@ public class PlayerController : MonoBehaviour
         else if (throwableObject == electroPotion)
         {
             ApplyElectroEffect();
+        }
+        else if (throwableObject == HealingPotionObject)
+        {
+            HealPlayer();
+        }
+
+        StartCoroutine(ThrowPotionCoolDown());
+    }
+
+    void HealPlayer()
+    {
+        if (hpBar != null)
+        {
+            hpBar.currentHP = Mathf.Min(hpBar.currentHP + 20, hpBar.maxHP);
+            hpBar.UpdateHPDisplay();
+            // currentStatusEffects.Add("Healing");
         }
     }
 
@@ -361,6 +415,10 @@ public class PlayerController : MonoBehaviour
         float timer = 5f;
         electroVFX.SetActive(true);
 
+        float originalSprintSpeed = sprintSpeed;
+        float originalTurnSpeed = turnSpeed;
+        float originalAcceleration = acceleration;
+
         sprintSpeed *= 2;
         turnSpeed *= 2;
         acceleration *= 2;
@@ -372,10 +430,11 @@ public class PlayerController : MonoBehaviour
             timer -= 1f;
         }
 
-        sprintSpeed = 10f;
-        turnSpeed = 300f;
-        acceleration = 5f;
-isSprinting = false;
+        sprintSpeed = originalSprintSpeed;
+        turnSpeed = 1000;
+        acceleration = originalAcceleration;
+
+        isSprinting = false;
         electroVFX.SetActive(false);
         currentStatusEffects.Remove("Electro");
         electroStatusIcon.SetActive(false);

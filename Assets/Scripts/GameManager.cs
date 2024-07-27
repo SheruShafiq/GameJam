@@ -27,14 +27,14 @@ public class GameManager : MonoBehaviour
     public float potionSpawnRangeX = 20f;
     public float potionSpawnRangeZ = 20f;
     public int potionBaseSpawnCount = 1;
-public GameObject nukeTriggeredUi;
+    public GameObject nukeTriggeredUi;
     public int currentLvl = 1;
     private bool isSpawningEnemies = false; // Flag to control spawning
 
     void Start()
     {
         SpawnEnemies();
-        SpawnPotions();
+        // SpawnPotions();
     }
 
     private void SpawnEnemies()
@@ -92,7 +92,7 @@ public GameObject nukeTriggeredUi;
 
     void Update()
     {
-        if(isNukeTriggered)
+        if (isNukeTriggered)
         {
             nukeTriggeredUi.SetActive(true);
         }
@@ -136,7 +136,7 @@ public GameObject nukeTriggeredUi;
         currentLvl++;
         Debug.Log("Level Up: " + currentLvl);
         SpawnEnemies();
-        SpawnPotions();
+        // SpawnPotions();
         isSpawningEnemies = false; // Reset the flag after spawning
         Debug.Log("EnemySpawn Count: " + (enemyBaseSpawnCount + (currentLvl - 1) * 10));
         Debug.Log("Potion Spawn Count: " + (potionBaseSpawnCount + (currentLvl - 1)));

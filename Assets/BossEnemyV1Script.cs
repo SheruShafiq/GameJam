@@ -30,6 +30,7 @@ public class BossEnemyV1 : MonoBehaviour
     private bool isResting = false;
     private bool stopFollowing = false;
     public HPBar hpBar;
+    private bool isHealing = false;
 
     void Start()
     {
@@ -136,6 +137,43 @@ public class BossEnemyV1 : MonoBehaviour
             }
             yield return null;
         }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("HealingPotion"))
+        {
+            if (!isHealing)
+            {
+                HealingPotionZoneEffect();
+            }
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.CompareTag("HealingPotion"))
+        {
+            StopHealingPotionZoneEffect();
+        }
+    }
+
+    private void HealingPotionZoneEffect()
+    {
+        isHealing = true;
+        InvokeRepeating("HealPlayer", 0, 1);
+    }
+
+    private void StopHealingPotionZoneEffect()
+    {
+        isHealing = false;
+        CancelInvoke("HealPlayer");
+    }
+
+    void HealPlayer()
+    {
+        currentHP = Mathf.Min(currentHP + 20, maxHP);
+        UpdateHP();
     }
 
     void FollowPlayer()

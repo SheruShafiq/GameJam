@@ -31,6 +31,7 @@ public class Enemy : MonoBehaviour
     private Coroutine fireDamageCoroutine;
     private Coroutine damageCoroutine;
     private bool isResting = false;
+    private bool isHealing = false;
 
     void Start()
     {
@@ -59,7 +60,15 @@ public class Enemy : MonoBehaviour
             Debug.LogError("Rigidbody component is not assigned or found in the Enemy.");
         }
     }
-
+    void HealPlayer()
+    {
+        if (hpBar != null)
+        {
+            hpBar.currentHP = Mathf.Min(hpBar.currentHP + 20, hpBar.maxHP);
+            hpBar.UpdateHPDisplay();
+            // currentStatusEffects.Add("Healing");
+        }
+    }
     IEnumerator continueFollowing()
     {
         yield return new WaitForSeconds(2);
@@ -124,7 +133,7 @@ public class Enemy : MonoBehaviour
 
         while (timer > 0)
         {
-            TakeDamage(1);
+            TakeDamage(10);
             yield return new WaitForSeconds(1);
             timer -= 1f;
         }
@@ -145,6 +154,36 @@ public class Enemy : MonoBehaviour
         damageCoroutine = null;
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("HealingPotion"))
+        {
+            if (hpBar != null && !isHealing)
+            {
+                HealingPotionZoneEffect();
+            }
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.CompareTag("HealingPotion"))
+        {
+            StopHealingPotionZoneEffect();
+        }
+    }
+
+    private void HealingPotionZoneEffect()
+    {
+        isHealing = true;
+        InvokeRepeating("HealPlayer", 0, 1);
+    }
+
+    private void StopHealingPotionZoneEffect()
+    {
+        isHealing = false;
+        CancelInvoke("HealPlayer");
+    }
     void AttackPlayer()
     {
         var playerController = player.GetComponent<PlayerController>();
@@ -205,7 +244,7 @@ public class Enemy : MonoBehaviour
 
         while (timer > 0)
         {
-            TakeDamage(1);
+            TakeDamage(10);
             yield return new WaitForSeconds(1);
             timer -= 1f;
         }
