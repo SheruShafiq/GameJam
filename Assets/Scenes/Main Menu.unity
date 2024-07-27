@@ -2041,11 +2041,12 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: "WASD to move\nSHIFT to sprint\nQ for basic attack\nLeft Mouse Button to
-    throw selected potion.\nRight Mouse Button to drink the selected potion.\nPress
-    1 to equip fire potion\nPress 2 to equip Electric potion\nInflict Electric and
-    Burning damage at the same time\nto trigger a Overload!! (Yes you can overload
-    yourself too!)\nTriggering overload will double your cooldown for throwing potions.\nDrinking
-    a potion can give you potential buffs or debuffs, so yea. \nF around and F out."
+    throw selected potion. (IT ONLY BREAKS WHEN IT TOUCHES THE GROUND)\nRight Mouse
+    Button to drink the selected potion.\nPress 1 to equip fire potion\nPress 2 to
+    equip Electric potion\nInflict Electric and Burning damage at the same time\nto
+    trigger a Overload!! (Yes you can overload yourself too!)\nTriggering overload
+    will double your cooldown for throwing potions.\nDrinking a potion can give you
+    potential buffs or debuffs, so yea. \nF around and F out."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

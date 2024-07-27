@@ -212,6 +212,10 @@ public class BossEnemyV1 : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
+        if (collision.gameObject.CompareTag("EarthPotionInflicter")) 
+        {
+            TakeDamage(500);
+        }
         if (collision.gameObject.CompareTag("Player"))
         {
             isCollidingWithPlayer = true;

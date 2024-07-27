@@ -14,6 +14,7 @@ public class PlayerController : MonoBehaviour
     public GameObject healingPotionFrame;
     public GameObject firePotionFrame;
     public GameObject electroPotionFrame;
+    public GameObject earthPotionFrame; // New Earth Potion frame
     private float currentSpeed;
     public UISelectedFrameScript uiElement;
     public Transform target1;
@@ -27,7 +28,7 @@ public class PlayerController : MonoBehaviour
     public GameObject selectedPotionUI;
     public GameObject walkingSfx;
     public GameObject quickAttackSfx;
-    public GameObject HealingPotionObject;  // New Healing Potion object
+    public GameObject HealingPotionObject;
     public HPBar hpBar;
     public Timer quickAttackTimer;
     public Timer throwPotionTimer;
@@ -39,17 +40,22 @@ public class PlayerController : MonoBehaviour
     public GameObject fireEffect;
     public GameObject electroPotion;
     public GameObject electroEffect;
+    public GameObject earthPotion; // New Earth Potion object
+    public GameObject earthEffect; // New Earth Potion effect
     public float throwForce = 10f;
 
     public GameManager gameManager;
     public GameObject fireStatusIcon;
     public GameObject electroStatusIcon;
+    public GameObject earthStatusIcon; // New Earth status icon
     public GameObject fireVFX;
     public GameObject electroVFX;
+    public GameObject earthVFX; // New Earth VFX
     public GameObject nukeVFX;
     public List<string> currentStatusEffects = new List<string>();
 
     private Coroutine electroDamageCoroutine;
+    private Coroutine earthStatusEffectCoroutine; // New Earth status effect coroutine
     private bool isSprinting;
     public GameObject healingVFX;
     private bool isHealing = false;
@@ -85,15 +91,6 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // if (!currentStatusEffects.Contains("Electro"))
-        // {
-        //     StopCoroutine(electroDamageCoroutine);
-        // }
-        // if (!currentStatusEffects.Contains("Fire"))
-        // {
-        //     StopCoroutine(fireDamageCoroutine);
-        // }
-
         hpBar.UpdateHPDisplay();
         if (hpBar.currentHP <= 0)
         {
@@ -110,7 +107,6 @@ public class PlayerController : MonoBehaviour
                 InstantiateAndDestroyNukeVFX();
             }
 
-
             currentStatusEffects.Remove("Fire");
             currentStatusEffects.Remove("Electro");
             fireStatusIcon.SetActive(false);
@@ -118,8 +114,6 @@ public class PlayerController : MonoBehaviour
 
             fireVFX.SetActive(false);
             electroVFX.SetActive(false);
-
-
         }
 
         if (Input.GetKeyDown(KeyCode.Alpha1))
@@ -131,6 +125,7 @@ public class PlayerController : MonoBehaviour
             firePotionFrame.SetActive(true);
             electroPotionFrame.SetActive(false);
             healingPotionFrame.SetActive(false);
+            earthPotionFrame.SetActive(false);
             throwableObject = firePotion;
             replacementObject = fireEffect;
         }
@@ -143,7 +138,7 @@ public class PlayerController : MonoBehaviour
             firePotionFrame.SetActive(false);
             electroPotionFrame.SetActive(true);
             healingPotionFrame.SetActive(false);
-
+            earthPotionFrame.SetActive(false);
             throwableObject = electroPotion;
             replacementObject = electroEffect;
         }
@@ -156,9 +151,22 @@ public class PlayerController : MonoBehaviour
             firePotionFrame.SetActive(false);
             electroPotionFrame.SetActive(false);
             healingPotionFrame.SetActive(true);
-
+            earthPotionFrame.SetActive(false);
             throwableObject = HealingPotionObject;
-            replacementObject = healingVFX;  // No replacement effect for healing potion
+            replacementObject = healingVFX; // No replacement effect for healing potion
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha4))
+        {
+            if (throwableObject == earthPotion && replacementObject == earthEffect)
+            {
+                return;
+            }
+            firePotionFrame.SetActive(false);
+            electroPotionFrame.SetActive(false);
+            healingPotionFrame.SetActive(false);
+            earthPotionFrame.SetActive(true);
+            throwableObject = earthPotion;
+            replacementObject = earthEffect;
         }
 
         if (Input.GetKeyDown(KeyCode.Q) && !quickAttackCooldown)
@@ -225,7 +233,6 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-
     void HandleDeath()
     {
         quickAttackBase.SetActive(false);
@@ -249,7 +256,6 @@ public class PlayerController : MonoBehaviour
         sprintSpeed = 0;
         turnSpeed = 0;
         acceleration = 0;
-
     }
 
     void InstantiateAndDestroyNukeVFX()
@@ -270,7 +276,6 @@ public class PlayerController : MonoBehaviour
         electroStatusIcon.SetActive(false);
         fireVFX.SetActive(false);
         electroVFX.SetActive(false);
-
     }
 
     void PerformQuickAttack()
@@ -331,7 +336,7 @@ public class PlayerController : MonoBehaviour
         }
         throwPotionCooldownCoroutine = StartCoroutine(ThrowPotionCoolDown());
     }
-    // on collision enter with healing potion
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.CompareTag("HealingPotion"))
@@ -363,7 +368,6 @@ public class PlayerController : MonoBehaviour
         CancelInvoke("HealPlayer");
     }
 
-
     void PerformDrinkPotion()
     {
         if (!throwPotionCooldown)
@@ -380,6 +384,10 @@ public class PlayerController : MonoBehaviour
             {
                 HealPlayerDrink();
             }
+            else if (throwableObject == earthPotion)
+            {
+                ApplyEarthEffect();
+            }
 
             throwPotionCooldown = true;
             if (throwPotionCooldownCoroutine != null)
@@ -390,29 +398,26 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-
     void HealPlayer()
     {
         if (hpBar != null)
         {
             hpBar.currentHP = Mathf.Min(hpBar.currentHP + 20, hpBar.maxHP);
             hpBar.UpdateHPDisplay();
-            // currentStatusEffects.Add("Healing");A
         }
-
     }
+
     void HealPlayerDrink()
     {
         if (hpBar != null)
         {
             hpBar.currentHP = Mathf.Min(hpBar.currentHP + 10, hpBar.maxHP);
             hpBar.UpdateHPDisplay();
-            // currentStatusEffects.Add("Healing");
         }
         healingPlayerFX.SetActive(true);
         Invoke("StopHealingPlayerFX", 2f);
-
     }
+
     void StopHealingPlayerFX()
     {
         healingPlayerFX.SetActive(false);
@@ -433,6 +438,15 @@ public class PlayerController : MonoBehaviour
         {
             currentStatusEffects.Add("Electro");
             electroDamageCoroutine = StartCoroutine(ElectroStatusEffect());
+        }
+    }
+
+    void ApplyEarthEffect()
+    {
+        if (!currentStatusEffects.Contains("Earth"))
+        {
+            currentStatusEffects.Add("Earth");
+            earthStatusEffectCoroutine = StartCoroutine(EarthStatusEffect());
         }
     }
 
@@ -492,6 +506,39 @@ public class PlayerController : MonoBehaviour
         electroDamageCoroutine = null;
     }
 
+    IEnumerator EarthStatusEffect()
+    {
+        if (earthStatusEffectCoroutine != null)
+        {
+            StopCoroutine(earthStatusEffectCoroutine);
+        }
+
+        earthStatusIcon.SetActive(true);
+        float timer = 5f;
+        earthVFX.SetActive(true);
+
+        float originalMoveSpeed = moveSpeed;
+        float originalTurnSpeed = turnSpeed;
+
+        moveSpeed /= 2;
+        turnSpeed /= 2;
+
+        while (timer > 0)
+        {
+            TakeDamage(1);
+            yield return new WaitForSeconds(1);
+            timer -= 1f;
+        }
+
+        moveSpeed = originalMoveSpeed;
+        turnSpeed = originalTurnSpeed;
+
+        earthVFX.SetActive(false);
+        currentStatusEffects.Remove("Earth");
+        earthStatusIcon.SetActive(false);
+        earthStatusEffectCoroutine = null;
+    }
+
     public void TakeDamage(int damage)
     {
         if (hpBar != null)
@@ -526,7 +573,6 @@ public class PlayerController : MonoBehaviour
     {
         throwPotionCooldown = false;
     }
-
 
     IEnumerator spawnAndThrowObjectCount()
     {

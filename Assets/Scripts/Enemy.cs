@@ -208,6 +208,10 @@ public class Enemy : MonoBehaviour
                 Die();
             }
         }
+        if (collision.gameObject.CompareTag("EarthPotionInflicter")) 
+        {
+            Die();
+        }
         else if (collision.gameObject.CompareTag("Player"))
         {
             isCollidingWithPlayer = true;
