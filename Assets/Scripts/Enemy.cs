@@ -214,7 +214,7 @@ public class Enemy : MonoBehaviour
         }
         else if (collision.gameObject.CompareTag("QuickAttackProjectile"))
         {
-            TakeDamage(5);
+            TakeDamage(50);
         }
         else if (collision.gameObject.CompareTag("Lightning Effect Inflicter"))
         {
@@ -265,7 +265,8 @@ public class Enemy : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
-        currentHP -= damage;
+
+        currentHP = currentHP - (damage * gameManager.damageMultiplier);
         if (hpBar != null)
         {
             hpBar.currentHP = currentHP;

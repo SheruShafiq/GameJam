@@ -229,7 +229,7 @@ public class BossEnemyV1 : MonoBehaviour
         }
         else if (collision.gameObject.CompareTag("QuickAttackProjectile"))
         {
-            TakeDamage(5);
+            TakeDamage(50);
         }
         else if (collision.gameObject.CompareTag("Lightning Effect Inflicter"))
         {
@@ -261,8 +261,13 @@ public class BossEnemyV1 : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
-        currentHP -= damage;
-        UpdateHP();
+
+        currentHP = currentHP - (damage * gameManager.damageMultiplier);
+        if (hpBar != null)
+        {
+            hpBar.currentHP = currentHP;
+            hpBar.UpdateHPDisplay();
+        }
 
         if (currentHP <= 0)
         {

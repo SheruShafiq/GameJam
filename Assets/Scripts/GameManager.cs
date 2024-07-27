@@ -30,6 +30,7 @@ public class GameManager : MonoBehaviour
     public GameObject nukeTriggeredUi;
     public int currentLvl = 1;
     private bool isSpawningEnemies = false; // Flag to control spawning
+    public int damageMultiplier = 1;
 
     void Start()
     {

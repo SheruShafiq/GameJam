@@ -50,6 +50,8 @@ public class PlayerController : MonoBehaviour
     private bool isSprinting;
     public GameObject healingVFX;
     private bool isHealing = false;
+
+
     void Start()
     {
         if (hpBar != null)
@@ -78,6 +80,15 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        // if (!currentStatusEffects.Contains("Electro"))
+        // {
+        //     StopCoroutine(electroDamageCoroutine);
+        // }
+        // if (!currentStatusEffects.Contains("Fire"))
+        // {
+        //     StopCoroutine(fireDamageCoroutine);
+        // }
+
         hpBar.UpdateHPDisplay();
         if (hpBar.currentHP <= 0)
         {
@@ -87,26 +98,19 @@ public class PlayerController : MonoBehaviour
 
         if (currentStatusEffects.Contains("Fire") && currentStatusEffects.Contains("Electro"))
         {
+            currentStatusEffects.Remove("Fire");
+            currentStatusEffects.Remove("Electro");
             if (nukeVFX != null && GameObject.FindGameObjectsWithTag("Nuke").Length == 0)
             {
                 InstantiateAndDestroyNukeVFX();
             }
 
-            if (electroDamageCoroutine != null)
-            {
-                StopCoroutine(electroDamageCoroutine);
-            }
 
-            if (fireDamageCoroutine != null)
-            {
-                StopCoroutine(fireDamageCoroutine);
-            }
             currentStatusEffects.Remove("Fire");
             currentStatusEffects.Remove("Electro");
             fireStatusIcon.SetActive(false);
             electroStatusIcon.SetActive(false);
-            StopCoroutine(fireDamageCoroutine);
-            StopCoroutine(electroDamageCoroutine);
+
             fireVFX.SetActive(false);
             electroVFX.SetActive(false);
 
@@ -154,7 +158,7 @@ public class PlayerController : MonoBehaviour
             PerformThrowPotion();
         }
 
-        if (Input.GetMouseButton(1))
+        if (Input.GetMouseButton(1) && !throwPotionCooldown)
         {
             PerformDrinkPotion();
         }
@@ -244,8 +248,7 @@ public class PlayerController : MonoBehaviour
         electroStatusIcon.SetActive(false);
         fireVFX.SetActive(false);
         electroVFX.SetActive(false);
-        StopCoroutine(fireDamageCoroutine);
-        StopCoroutine(electroDamageCoroutine);
+
     }
 
     void PerformQuickAttack()
@@ -341,21 +344,30 @@ public class PlayerController : MonoBehaviour
 
     void PerformDrinkPotion()
     {
-        if (throwableObject == firePotion)
+        if (!throwPotionCooldown)
         {
-            ApplyFireEffect();
-        }
-        else if (throwableObject == electroPotion)
-        {
-            ApplyElectroEffect();
-        }
-        else if (throwableObject == HealingPotionObject)
-        {
-            HealPlayer();
-        }
+            if (throwableObject == firePotion)
+            {
+                ApplyFireEffect();
+            }
+            else if (throwableObject == electroPotion)
+            {
+                ApplyElectroEffect();
+            }
+            else if (throwableObject == HealingPotionObject)
+            {
+                HealPlayerDrink();
+            }
 
-        StartCoroutine(ThrowPotionCoolDown());
+            throwPotionCooldown = true;
+            if (throwPotionCooldownCoroutine != null)
+            {
+                StopCoroutine(throwPotionCooldownCoroutine);
+            }
+            throwPotionCooldownCoroutine = StartCoroutine(ThrowPotionCoolDown());
+        }
     }
+
 
     void HealPlayer()
     {
@@ -365,6 +377,17 @@ public class PlayerController : MonoBehaviour
             hpBar.UpdateHPDisplay();
             // currentStatusEffects.Add("Healing");
         }
+
+    }
+    void HealPlayerDrink()
+    {
+        if (hpBar != null)
+        {
+            hpBar.currentHP = Mathf.Min(hpBar.currentHP + 10, hpBar.maxHP);
+            hpBar.UpdateHPDisplay();
+            // currentStatusEffects.Add("Healing");
+        }
+
     }
 
     void ApplyFireEffect()
@@ -372,7 +395,7 @@ public class PlayerController : MonoBehaviour
         if (!currentStatusEffects.Contains("Fire"))
         {
             currentStatusEffects.Add("Fire");
-            fireDamageCoroutine = StartCoroutine(TakeFireDamageFor5Seconds());
+            fireDamageCoroutine = StartCoroutine(FireStatusEffect());
         }
     }
 
@@ -385,19 +408,19 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    IEnumerator TakeFireDamageFor5Seconds()
+    IEnumerator FireStatusEffect()
     {
         fireStatusIcon.SetActive(true);
         float timer = 5f;
         fireVFX.SetActive(true);
-
+        gameManager.damageMultiplier = 2;
         while (timer > 0)
         {
-            TakeDamage(1);
+            TakeDamage(5);
             yield return new WaitForSeconds(1);
             timer -= 1f;
         }
-
+        gameManager.damageMultiplier = 1;
         fireVFX.SetActive(false);
         currentStatusEffects.Remove("Fire");
         fireStatusIcon.SetActive(false);
@@ -475,6 +498,7 @@ public class PlayerController : MonoBehaviour
     {
         throwPotionCooldown = false;
     }
+
 
     IEnumerator spawnAndThrowObjectCount()
     {

@@ -15430,7 +15430,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   animator: {fileID: 3973862786828647763}
-  maxHP: 500
+  maxHP: 800
   fireStatusIcon: {fileID: 1021801039588735822}
   electroStatusIcon: {fileID: 3177555574882703220}
   hpSlider: {fileID: 4907700186637113865}
