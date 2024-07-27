@@ -11,6 +11,9 @@ public class PlayerController : MonoBehaviour
     public float sprintSpeed = 10f;
     public float turnSpeed = 300f;
     public float acceleration = 5f;
+    public GameObject healingPotionFrame;
+    public GameObject firePotionFrame;
+    public GameObject electroPotionFrame;
     private float currentSpeed;
     public UISelectedFrameScript uiElement;
     public Transform target1;
@@ -37,7 +40,7 @@ public class PlayerController : MonoBehaviour
     public GameObject electroPotion;
     public GameObject electroEffect;
     public float throwForce = 10f;
-    private Animator uiAnimator;
+
     public GameManager gameManager;
     public GameObject fireStatusIcon;
     public GameObject electroStatusIcon;
@@ -45,12 +48,13 @@ public class PlayerController : MonoBehaviour
     public GameObject electroVFX;
     public GameObject nukeVFX;
     public List<string> currentStatusEffects = new List<string>();
-    private Coroutine fireDamageCoroutine;
+
     private Coroutine electroDamageCoroutine;
     private bool isSprinting;
     public GameObject healingVFX;
     private bool isHealing = false;
-
+    private Coroutine fireStatusEffectCoroutine;
+    public GameObject healingPlayerFX;
 
     void Start()
     {
@@ -65,6 +69,7 @@ public class PlayerController : MonoBehaviour
         replacementObject = fireEffect;
         quickAttackCooldown = true;
         throwPotionCooldown = true;
+        firePotionFrame.SetActive(true);
         StartCoroutine(ThrowPotionCoolDown());
         StartCoroutine(QuickAttackCoolDown());
         animator = GetComponent<Animator>();
@@ -123,9 +128,11 @@ public class PlayerController : MonoBehaviour
             {
                 return;
             }
+            firePotionFrame.SetActive(true);
+            electroPotionFrame.SetActive(false);
+            healingPotionFrame.SetActive(false);
             throwableObject = firePotion;
             replacementObject = fireEffect;
-            selectedPotionUI.transform.position = new Vector3(140, selectedPotionUI.transform.position.y, selectedPotionUI.transform.position.z);
         }
         if (Input.GetKeyDown(KeyCode.Alpha2))
         {
@@ -133,9 +140,12 @@ public class PlayerController : MonoBehaviour
             {
                 return;
             }
+            firePotionFrame.SetActive(false);
+            electroPotionFrame.SetActive(true);
+            healingPotionFrame.SetActive(false);
+
             throwableObject = electroPotion;
             replacementObject = electroEffect;
-            selectedPotionUI.transform.position = new Vector3(280, selectedPotionUI.transform.position.y, selectedPotionUI.transform.position.z);
         }
         if (Input.GetKeyDown(KeyCode.Alpha3))
         {
@@ -143,9 +153,12 @@ public class PlayerController : MonoBehaviour
             {
                 return;
             }
+            firePotionFrame.SetActive(false);
+            electroPotionFrame.SetActive(false);
+            healingPotionFrame.SetActive(true);
+
             throwableObject = HealingPotionObject;
             replacementObject = healingVFX;  // No replacement effect for healing potion
-            selectedPotionUI.transform.position = new Vector3(420, selectedPotionUI.transform.position.y, selectedPotionUI.transform.position.z);
         }
 
         if (Input.GetKeyDown(KeyCode.Q) && !quickAttackCooldown)
@@ -166,48 +179,52 @@ public class PlayerController : MonoBehaviour
         float moveHorizontal = Input.GetAxis("Horizontal");
         float moveVertical = Input.GetAxis("Vertical");
 
-        Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
-
-        if (movement.magnitude > 1)
+        if (!gameManager.isPlayerDead)
         {
-            movement.Normalize();
-        }
+            Vector3 movement = new Vector3(moveHorizontal, 0.0f, moveVertical);
 
-        bool isMoving = movement.magnitude > 0;
-        isSprinting = Input.GetKey(KeyCode.LeftShift) && isMoving;
+            if (movement.magnitude > 1)
+            {
+                movement.Normalize();
+            }
 
-        if (isMoving)
-        {
-            walkingSfx.SetActive(true);
-        }
-        else
-        {
-            walkingSfx.SetActive(false);
-        }
+            bool isMoving = movement.magnitude > 0;
+            isSprinting = Input.GetKey(KeyCode.LeftShift) && isMoving;
 
-        if (isSprinting)
-        {
-            walkingSfx.SetActive(false);
-            sprintingSfx.SetActive(true);
-            currentSpeed = Mathf.Min(currentSpeed + acceleration * Time.deltaTime, sprintSpeed);
-        }
-        else
-        {
-            sprintingSfx.SetActive(false);
-            currentSpeed = moveSpeed;
-        }
+            if (isMoving)
+            {
+                walkingSfx.SetActive(true);
+            }
+            else
+            {
+                walkingSfx.SetActive(false);
+            }
 
-        animator.SetBool("isRunning", isSprinting);
-        animator.SetBool("isWalking", isMoving && !isSprinting);
+            if (isSprinting)
+            {
+                walkingSfx.SetActive(false);
+                sprintingSfx.SetActive(true);
+                currentSpeed = Mathf.Min(currentSpeed + acceleration * Time.deltaTime, sprintSpeed);
+            }
+            else
+            {
+                sprintingSfx.SetActive(false);
+                currentSpeed = moveSpeed;
+            }
 
-        transform.Translate(currentSpeed * Time.deltaTime * movement, Space.World);
+            animator.SetBool("isRunning", isSprinting);
+            animator.SetBool("isWalking", isMoving && !isSprinting);
 
-        if (movement != Vector3.zero)
-        {
-            Quaternion toRotation = Quaternion.LookRotation(movement, Vector3.up);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, turnSpeed * Time.deltaTime);
+            transform.Translate(currentSpeed * Time.deltaTime * movement, Space.World);
+
+            if (movement != Vector3.zero)
+            {
+                Quaternion toRotation = Quaternion.LookRotation(movement, Vector3.up);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, turnSpeed * Time.deltaTime);
+            }
         }
     }
+
 
     void HandleDeath()
     {
@@ -228,6 +245,11 @@ public class PlayerController : MonoBehaviour
         {
             gameManager.isPlayerDead = true;
         }
+        moveSpeed = 0;
+        sprintSpeed = 0;
+        turnSpeed = 0;
+        acceleration = 0;
+
     }
 
     void InstantiateAndDestroyNukeVFX()
@@ -375,7 +397,7 @@ public class PlayerController : MonoBehaviour
         {
             hpBar.currentHP = Mathf.Min(hpBar.currentHP + 20, hpBar.maxHP);
             hpBar.UpdateHPDisplay();
-            // currentStatusEffects.Add("Healing");
+            // currentStatusEffects.Add("Healing");A
         }
 
     }
@@ -387,7 +409,13 @@ public class PlayerController : MonoBehaviour
             hpBar.UpdateHPDisplay();
             // currentStatusEffects.Add("Healing");
         }
+        healingPlayerFX.SetActive(true);
+        Invoke("StopHealingPlayerFX", 2f);
 
+    }
+    void StopHealingPlayerFX()
+    {
+        healingPlayerFX.SetActive(false);
     }
 
     void ApplyFireEffect()
@@ -395,7 +423,7 @@ public class PlayerController : MonoBehaviour
         if (!currentStatusEffects.Contains("Fire"))
         {
             currentStatusEffects.Add("Fire");
-            fireDamageCoroutine = StartCoroutine(FireStatusEffect());
+            fireStatusEffectCoroutine = StartCoroutine(FireStatusEffect());
         }
     }
 
@@ -424,7 +452,7 @@ public class PlayerController : MonoBehaviour
         fireVFX.SetActive(false);
         currentStatusEffects.Remove("Fire");
         fireStatusIcon.SetActive(false);
-        fireDamageCoroutine = null;
+        fireStatusEffectCoroutine = null;
     }
 
     IEnumerator ElectroStatusEffect()
