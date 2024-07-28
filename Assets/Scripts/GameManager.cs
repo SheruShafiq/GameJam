@@ -1,4 +1,5 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -8,6 +9,7 @@ public class GameManager : MonoBehaviour
     public bool isNukeTriggered = false;
     public GameObject levelupUI;
     public GameObject BossEnemyV1;
+    public GameObject BossEnemyV2;
 
     // public GameObject tutorialText;
     public bool isPlayerDead = false;
@@ -31,11 +33,18 @@ public class GameManager : MonoBehaviour
     public int currentLvl = 1;
     private bool isSpawningEnemies = false; // Flag to control spawning
     public int damageMultiplier = 1;
+     public TextMeshProUGUI textMeshProText;
+
+    public GameObject[] tips;
 
     void Start()
     {
         SpawnEnemies();
-        // SpawnPotions();
+        if (!textMeshProText && GetComponent<TextMeshProUGUI>())
+        {
+            textMeshProText = GetComponent<TextMeshProUGUI>();
+        }
+        textMeshProText.text = "LEVEL " + currentLvl.ToString() + "/10";
     }
 
     private void SpawnEnemies()
@@ -49,14 +58,23 @@ public class GameManager : MonoBehaviour
             Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
         }
         SpawnBoss();
+        SpawnBossV2 ();
     }
 
     private void SpawnBoss()
     {
-        if (currentLvl > 2)
+        if (currentLvl > 5)
             for (int i = 0; i < currentLvl * 2; i++)
             {
                 Instantiate(BossEnemyV1, GetValidSpawnPosition(enemySpawnRangeX + 50, enemySpawnRangeZ + 50), Quaternion.identity);
+            }
+    }
+    private void SpawnBossV2()
+    {
+        if (currentLvl > 3)
+            for (int i = 0; i < currentLvl * 2; i++)
+            {
+                Instantiate(BossEnemyV2, GetValidSpawnPosition(enemySpawnRangeX + 50, enemySpawnRangeZ + 50), Quaternion.identity);
             }
     }
 
@@ -115,13 +133,14 @@ public class GameManager : MonoBehaviour
             // tutorialText.SetActive(false);
             levelupUI.SetActive(true);
             StartCoroutine(AllEnemiesKilled());
+            tips[currentLvl - 1].SetActive(true);
         }
     }
 
     public void TriggerNuke()
     {
         isNukeTriggered = true;
-        // StartCoroutine(resetNuke());
+        //  StartCoroutine(resetNuke());
     }
 
     IEnumerator resetNuke()
@@ -133,6 +152,7 @@ public class GameManager : MonoBehaviour
     {
         yield return new WaitForSeconds(5);
         levelupUI.SetActive(false);
+        tips[currentLvl - 1].SetActive(false);
         // tutorialText.SetActive(true);
         currentLvl++;
         Debug.Log("Level Up: " + currentLvl);
@@ -140,7 +160,11 @@ public class GameManager : MonoBehaviour
         // SpawnPotions();
         isSpawningEnemies = false; // Reset the flag after spawning
         Debug.Log("EnemySpawn Count: " + (enemyBaseSpawnCount + (currentLvl - 1) * 10));
-        Debug.Log("Potion Spawn Count: " + (potionBaseSpawnCount + (currentLvl - 1)));
+      //  Debug.Log("Potion Spawn Count: " + (potionBaseSpawnCount + (currentLvl - 1)));
+        if (textMeshProText)
+        {
+            textMeshProText.text = "LEVEL " + currentLvl.ToString() + "/10";
+        }
     }
 
     IEnumerator RestartGame()

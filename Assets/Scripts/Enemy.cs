@@ -212,6 +212,10 @@ public class Enemy : MonoBehaviour
         {
             Die();
         }
+        if(collision.gameObject.CompareTag("EarthShatter"))
+        {
+           Die();
+        }
         else if (collision.gameObject.CompareTag("Player"))
         {
             isCollidingWithPlayer = true;

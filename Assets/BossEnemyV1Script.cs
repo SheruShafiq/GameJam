@@ -216,6 +216,16 @@ public class BossEnemyV1 : MonoBehaviour
         {
             TakeDamage(500);
         }
+        if(collision.gameObject.CompareTag("EarthShatter"))
+        {
+            TakeDamage(800);
+        }
+        {
+            if (!isHealing)
+            {
+                HealingPotionZoneEffect();
+            }
+        }
         if (collision.gameObject.CompareTag("Player"))
         {
             isCollidingWithPlayer = true;

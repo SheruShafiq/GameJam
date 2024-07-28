@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -61,6 +60,8 @@ public class PlayerController : MonoBehaviour
     private bool isHealing = false;
     private Coroutine fireStatusEffectCoroutine;
     public GameObject healingPlayerFX;
+    public GameObject EarthShatterFX;
+    private int earthDamagePreventionCount = 0; // Track Earth effect
 
     void Start()
     {
@@ -166,7 +167,25 @@ public class PlayerController : MonoBehaviour
             healingPotionFrame.SetActive(false);
             earthPotionFrame.SetActive(true);
             throwableObject = earthPotion;
-            replacementObject = earthEffect;
+            replacementObject = earthEffect; // Ensure replacementObject is set to earthEffect
+            if (currentStatusEffects.Contains("Fire"))
+            {
+                replacementObject = EarthShatterFX;
+                // currentStatusEffects.Remove("Fire");
+                // if (fireStatusEffectCoroutine != null)
+                // {
+                //     StopCoroutine(fireStatusEffectCoroutine);
+                //     fireStatusEffectCoroutine = null;
+                //     fireStatusIcon.SetActive(false);
+                //     currentStatusEffects.Remove("Fire");
+                //     fireVFX.SetActive(false);
+
+                // }
+            }
+            else
+            {
+                replacementObject = earthEffect;
+            }
         }
 
         if (Input.GetKeyDown(KeyCode.Q) && !quickAttackCooldown)
@@ -243,10 +262,12 @@ public class PlayerController : MonoBehaviour
         if (quickAttackCooldownCoroutine != null)
         {
             StopCoroutine(quickAttackCooldownCoroutine);
+            quickAttackCooldownCoroutine = null;
         }
         if (throwPotionCooldownCoroutine != null)
         {
             StopCoroutine(throwPotionCooldownCoroutine);
+            throwPotionCooldownCoroutine = null;
         }
         if (gameManager != null)
         {
@@ -269,7 +290,7 @@ public class PlayerController : MonoBehaviour
         TakeDamage(90);
         Destroy(nukeEffect, 2f);
         hpBar.UpdateHPDisplay();
-        gameManager.isNukeTriggered = true;
+        // gameManager.isNukeTriggered = true;
         currentStatusEffects.Remove("Fire");
         currentStatusEffects.Remove("Electro");
         fireStatusIcon.SetActive(false);
@@ -428,6 +449,10 @@ public class PlayerController : MonoBehaviour
         if (!currentStatusEffects.Contains("Fire"))
         {
             currentStatusEffects.Add("Fire");
+            if (fireStatusEffectCoroutine != null)
+            {
+                StopCoroutine(fireStatusEffectCoroutine);
+            }
             fireStatusEffectCoroutine = StartCoroutine(FireStatusEffect());
         }
     }
@@ -437,6 +462,10 @@ public class PlayerController : MonoBehaviour
         if (!currentStatusEffects.Contains("Electro") && !gameManager.isNukeTriggered)
         {
             currentStatusEffects.Add("Electro");
+            if (electroDamageCoroutine != null)
+            {
+                StopCoroutine(electroDamageCoroutine);
+            }
             electroDamageCoroutine = StartCoroutine(ElectroStatusEffect());
         }
     }
@@ -446,6 +475,11 @@ public class PlayerController : MonoBehaviour
         if (!currentStatusEffects.Contains("Earth"))
         {
             currentStatusEffects.Add("Earth");
+            earthDamagePreventionCount = 2; // Initialize damage prevention count
+            if (earthStatusEffectCoroutine != null)
+            {
+                StopCoroutine(earthStatusEffectCoroutine);
+            }
             earthStatusEffectCoroutine = StartCoroutine(EarthStatusEffect());
         }
     }
@@ -496,7 +530,7 @@ public class PlayerController : MonoBehaviour
         }
 
         sprintSpeed = originalSprintSpeed;
-        turnSpeed = 1000;
+        turnSpeed = originalTurnSpeed;
         acceleration = originalAcceleration;
 
         isSprinting = false;
@@ -514,35 +548,35 @@ public class PlayerController : MonoBehaviour
         }
 
         earthStatusIcon.SetActive(true);
-        float timer = 5f;
         earthVFX.SetActive(true);
 
-        float originalMoveSpeed = moveSpeed;
-        float originalTurnSpeed = turnSpeed;
-
-        moveSpeed /= 2;
-        turnSpeed /= 2;
-
-        while (timer > 0)
-        {
-            TakeDamage(1);
-            yield return new WaitForSeconds(1);
-            timer -= 1f;
-        }
-
-        moveSpeed = originalMoveSpeed;
-        turnSpeed = originalTurnSpeed;
+        yield return new WaitForSeconds(5);
 
         earthVFX.SetActive(false);
         currentStatusEffects.Remove("Earth");
         earthStatusIcon.SetActive(false);
         earthStatusEffectCoroutine = null;
+
+        // Reset replacementObject to default earthEffect
+        replacementObject = earthEffect;
     }
 
     public void TakeDamage(int damage)
     {
-        if (hpBar != null)
+        if (earthDamagePreventionCount > 0)
         {
+            earthDamagePreventionCount--;
+        }
+        else if (hpBar != null && earthDamagePreventionCount == 0)
+        {
+            currentStatusEffects.Remove("Earth");
+            earthStatusIcon.SetActive(false);
+            earthVFX.SetActive(false);
+            if (earthStatusEffectCoroutine != null)
+            {
+                StopCoroutine(earthStatusEffectCoroutine);
+                earthStatusEffectCoroutine = null;
+            }
             hpBar.DecreaseHP(damage);
             hpBar.UpdateHPDisplay();
         }
@@ -550,7 +584,11 @@ public class PlayerController : MonoBehaviour
 
     IEnumerator ThrowPotionCoolDown()
     {
-        int cooldownDuration = 2;
+        int cooldownDuration = 3;
+        if (currentStatusEffects.Contains("Electro"))
+        {
+            cooldownDuration = 1;
+        }
         if (gameManager.isNukeTriggered)
         {
             cooldownDuration *= 2;
@@ -680,5 +718,6 @@ public class ThrowableObject : MonoBehaviour
         Destroy(gameObject);
         GameObject replacement = Instantiate(replacementObject, replacementPosition, Quaternion.identity);
         Destroy(replacement, 4f);
+        
     }
 }
