@@ -320,10 +320,10 @@ public class PlayerController : MonoBehaviour
     IEnumerator QuickAttackCoolDown()
     {
         int cooldownDuration = 2;
-        if (gameManager.isNukeTriggered)
-        {
-            cooldownDuration *= 5;
-        }
+        // if (gameManager.isNukeTriggered)
+        // {
+        //     // cooldownDuration *= 5;
+        // }
         if (quickAttackTimer != null)
         {
             quickAttackTimer.hours = 0;
@@ -589,11 +589,11 @@ public class PlayerController : MonoBehaviour
         {
             cooldownDuration = 1;
         }
-        if (gameManager.isNukeTriggered)
-        {
-            cooldownDuration *= 2;
-            gameManager.isNukeTriggered = false;
-        }
+        // if (gameManager.isNukeTriggered)
+        // {
+        //     cooldownDuration *= 2;
+        //     gameManager.isNukeTriggered = false;
+        // }
         if (throwPotionTimer != null)
         {
             throwPotionTimer.hours = 0;

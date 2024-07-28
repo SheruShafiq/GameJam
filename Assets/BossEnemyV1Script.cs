@@ -32,6 +32,8 @@ public class BossEnemyV1 : MonoBehaviour
     public HPBar hpBar;
     private bool isHealing = false;
 
+    private bool isHealthCritical;
+
     void Start()
     {
         currentHP = maxHP;
@@ -62,10 +64,15 @@ public class BossEnemyV1 : MonoBehaviour
         }
 
         StartCoroutine(FollowPlayerCoroutine());
+       
     }
 
     void Update()
     {
+        if (hpBar.currentHP <= 100)
+        {
+            isHealthCritical = true;
+        }
         if (hpBar != null)
         {
             hpBar.currentHP = currentHP;
@@ -108,6 +115,9 @@ public class BossEnemyV1 : MonoBehaviour
                 electroStatusIcon.SetActive(false);
                 electroVFX.SetActive(false);
                 fireVFX.SetActive(false);
+                StopCoroutine(electroDamageCoroutine);
+                StopCoroutine(fireDamageCoroutine);
+                
             }
             if (electroDamageCoroutine != null)
             {
@@ -178,12 +188,13 @@ public class BossEnemyV1 : MonoBehaviour
 
     void FollowPlayer()
     {
+        float speed = followSpeed;
         Vector3 direction = (new Vector3(player.position.x, transform.position.y, player.position.z) - transform.position).normalized;
-        Vector3 newPosition = Vector3.MoveTowards(transform.position, new Vector3(player.position.x, transform.position.y, player.position.z), followSpeed * Time.deltaTime);
+        Vector3 newPosition = Vector3.MoveTowards(transform.position, new Vector3(player.position.x, transform.position.y, player.position.z), speed * Time.deltaTime);
         transform.position = newPosition;
         Vector3 playerFace = (player.position - transform.position).normalized;
         Quaternion lookRotation = Quaternion.LookRotation(playerFace);
-        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * followSpeed);
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * speed);
     }
 
     void AttackPlayer()
@@ -230,7 +241,7 @@ public class BossEnemyV1 : MonoBehaviour
         {
             isCollidingWithPlayer = true;
         }
-        else if (collision.gameObject.CompareTag("Nuke"))
+        else if (collision.gameObject.CompareTag("Nuke") || collision.gameObject.CompareTag("EarthShatter"))
         {
             stopFollowing = true;
             StartCoroutine(continueFollowing());
@@ -275,7 +286,6 @@ public class BossEnemyV1 : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
-
         currentHP = currentHP - (damage * gameManager.damageMultiplier);
         if (hpBar != null)
         {

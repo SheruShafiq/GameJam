@@ -111,14 +111,14 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        if (isNukeTriggered)
-        {
-            nukeTriggeredUi.SetActive(true);
-        }
-        else
-        {
-            nukeTriggeredUi.SetActive(false);
-        }
+        // if (isNukeTriggered)
+        // {
+        //     nukeTriggeredUi.SetActive(true);
+        // }
+        // else
+        // {
+        //     nukeTriggeredUi.SetActive(false);
+        // }
         if (isPlayerDead)
         {
             deathHud.SetActive(true);
