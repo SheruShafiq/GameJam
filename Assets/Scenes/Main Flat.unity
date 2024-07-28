@@ -22563,7 +22563,7 @@ MonoBehaviour:
   potionSpawnRangeZ: 50
   potionBaseSpawnCount: 0
   nukeTriggeredUi: {fileID: 171217970}
-  currentLvl: 6
+  currentLvl: 1
   damageMultiplier: 1
   textMeshProText: {fileID: 1347377154}
   tips:
