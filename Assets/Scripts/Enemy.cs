@@ -1,8 +1,6 @@
-using System;
 using System.Collections;
-using UnityEngine;
-using UnityEngine.UI;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
@@ -36,7 +34,7 @@ public class Enemy : MonoBehaviour
     void Start()
     {
         stopFollowing = true;
-        StartCoroutine(continueFollowing());
+        StartCoroutine(ContinueFollowing());
         player = GameObject.FindGameObjectWithTag("Player").transform;
         gameManagerObject = GameObject.FindGameObjectWithTag("GameManager");
         gameManager = gameManagerObject.GetComponent<GameManager>();
@@ -60,38 +58,18 @@ public class Enemy : MonoBehaviour
             Debug.LogError("Rigidbody component is not assigned or found in the Enemy.");
         }
     }
-    void HealPlayer()
-    {
-        if (hpBar != null)
-        {
-            hpBar.currentHP = Mathf.Min(hpBar.currentHP + 20, hpBar.maxHP);
-            hpBar.UpdateHPDisplay();
-            // currentStatusEffects.Add("Healing");
-        }
-    }
-    IEnumerator continueFollowing()
-    {
-        yield return new WaitForSeconds(2);
-        stopFollowing = false;
-    }
 
     void Update()
     {
         if (player != null && !gameManager.isPlayerDead && !stopFollowing && !isResting)
         {
-            Vector3 direction = (new Vector3(player.position.x, transform.position.y, player.position.z) - transform.position).normalized;
-            Vector3 newPosition = Vector3.MoveTowards(transform.position, new Vector3(player.position.x, transform.position.y, player.position.z), followSpeed * Time.deltaTime);
-            transform.position = newPosition;
-            Vector3 playerFace = (player.position - transform.position).normalized;
-            Quaternion lookRotation = Quaternion.LookRotation(playerFace);
-            transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * followSpeed);
+            FollowPlayer();
             ApplySeparation();
         }
 
         if (gameManager.isPlayerDead)
         {
-            animator.SetBool("idle", true);
-            FloatAwayFromPlayer();
+            HandlePlayerDeath();
         }
 
         if (isCollidingWithPlayer && damageCoroutine == null)
@@ -101,22 +79,48 @@ public class Enemy : MonoBehaviour
 
         if (currentStatusEffects.Contains("Fire") && currentStatusEffects.Contains("Electro"))
         {
-            if (nukeVFX != null)
-            {
-                if (GameObject.FindGameObjectsWithTag("Nuke").Length == 0)
-                    InstantiateAndDestroyNukeVFX();
-            }
-
-            if (electroDamageCoroutine != null)
-            {
-                StopCoroutine(electroDamageCoroutine);
-            }
-
-            if (fireDamageCoroutine != null)
-            {
-                StopCoroutine(fireDamageCoroutine);
-            }
+            HandleNukeEffect();
         }
+    }
+
+    void HandlePlayerDeath()
+    {
+        animator.SetBool("idle", true);
+        FloatAwayFromPlayer();
+    }
+
+    void HandleNukeEffect()
+    {
+        if (nukeVFX != null && GameObject.FindGameObjectsWithTag("Nuke").Length == 0)
+        {
+            InstantiateAndDestroyNukeVFX();
+        }
+
+        if (electroDamageCoroutine != null)
+        {
+            StopCoroutine(electroDamageCoroutine);
+        }
+
+        if (fireDamageCoroutine != null)
+        {
+            StopCoroutine(fireDamageCoroutine);
+        }
+    }
+
+    void FollowPlayer()
+    {
+        Vector3 direction = (new Vector3(player.position.x, transform.position.y, player.position.z) - transform.position).normalized;
+        Vector3 newPosition = Vector3.MoveTowards(transform.position, new Vector3(player.position.x, transform.position.y, player.position.z), followSpeed * Time.deltaTime);
+        transform.position = newPosition;
+        Vector3 playerFace = (player.position - transform.position).normalized;
+        Quaternion lookRotation = Quaternion.LookRotation(playerFace);
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * followSpeed);
+    }
+
+    IEnumerator ContinueFollowing()
+    {
+        yield return new WaitForSeconds(2);
+        stopFollowing = false;
     }
 
     void InstantiateAndDestroyNukeVFX()
@@ -184,12 +188,22 @@ public class Enemy : MonoBehaviour
         isHealing = false;
         CancelInvoke("HealPlayer");
     }
+
+    void HealPlayer()
+    {
+        if (hpBar != null)
+        {
+            hpBar.currentHP = Mathf.Min(hpBar.currentHP + 20, hpBar.maxHP);
+            hpBar.UpdateHPDisplay();
+        }
+    }
+
     void AttackPlayer()
     {
         var playerController = player.GetComponent<PlayerController>();
         if (playerController != null)
         {
-            playerController.hpBar.DecreaseHP(damagePerSecond);
+            // playerController.hpBar.DecreaseHP(damagePerSecond);
         }
         else
         {
@@ -208,13 +222,13 @@ public class Enemy : MonoBehaviour
                 Die();
             }
         }
-        if (collision.gameObject.CompareTag("EarthPotionInflicter")) 
+        else if (collision.gameObject.CompareTag("EarthPotionInflicter"))
         {
             Die();
         }
-        if(collision.gameObject.CompareTag("EarthShatter"))
+        else if (collision.gameObject.CompareTag("EarthShatter"))
         {
-           Die();
+            Die();
         }
         else if (collision.gameObject.CompareTag("Player"))
         {
@@ -273,8 +287,7 @@ public class Enemy : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
-
-        currentHP = currentHP - (damage * gameManager.damageMultiplier);
+        currentHP -= damage * gameManager.damageMultiplier;
         if (hpBar != null)
         {
             hpBar.currentHP = currentHP;

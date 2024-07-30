@@ -182,7 +182,7 @@ public GameObject gameOverUI;
 
     IEnumerator RestartGame()
     {
-        yield return new WaitForSeconds(2);
+        yield return new WaitForSeconds(5);
         SceneManager.LoadScene(0);
     }
 }

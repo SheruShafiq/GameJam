@@ -31,7 +31,6 @@ public class BossEnemyV1 : MonoBehaviour
     private bool stopFollowing = false;
     public HPBar hpBar;
     private bool isHealing = false;
-
     private bool isHealthCritical;
 
     void Start()
@@ -64,7 +63,6 @@ public class BossEnemyV1 : MonoBehaviour
         }
 
         StartCoroutine(FollowPlayerCoroutine());
-       
     }
 
     void Update()
@@ -106,27 +104,31 @@ public class BossEnemyV1 : MonoBehaviour
 
         if (currentStatusEffects.Contains("Fire") && currentStatusEffects.Contains("Electro"))
         {
-            if (nukeVFX != null)
-            {
-                InstantiateAndDestroyNukeVFX();
-                currentStatusEffects.Remove("Fire");
-                currentStatusEffects.Remove("Electro");
-                fireStatusIcon.SetActive(false);
-                electroStatusIcon.SetActive(false);
-                electroVFX.SetActive(false);
-                fireVFX.SetActive(false);
-                StopCoroutine(electroDamageCoroutine);
-                StopCoroutine(fireDamageCoroutine);
-                
-            }
-            if (electroDamageCoroutine != null)
-            {
-                StopCoroutine(electroDamageCoroutine);
-            }
-            if (fireDamageCoroutine != null)
-            {
-                StopCoroutine(fireDamageCoroutine);
-            }
+            HandleNukeEffect();
+        }
+    }
+
+    void HandleNukeEffect()
+    {
+        if (nukeVFX != null)
+        {
+            InstantiateAndDestroyNukeVFX();
+            currentStatusEffects.Remove("Fire");
+            currentStatusEffects.Remove("Electro");
+            fireStatusIcon.SetActive(false);
+            electroStatusIcon.SetActive(false);
+            electroVFX.SetActive(false);
+            fireVFX.SetActive(false);
+        }
+
+        if (electroDamageCoroutine != null)
+        {
+            StopCoroutine(electroDamageCoroutine);
+        }
+
+        if (fireDamageCoroutine != null)
+        {
+            StopCoroutine(fireDamageCoroutine);
         }
     }
 
@@ -215,36 +217,31 @@ public class BossEnemyV1 : MonoBehaviour
         StopAllCoroutines();
     }
 
-    IEnumerator continueFollowing()
-    {
-        yield return new WaitForSeconds(1);
-        stopFollowing = false;
-    }
-
     void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("EarthPotionInflicter")) 
+        if (collision.gameObject.CompareTag("EarthPotionInflicter"))
         {
+              animator.SetTrigger("takeDamage");
             TakeDamage(500);
+            stopFollowing = true;
+            StartCoroutine(ContinueFollowing());
         }
-        if(collision.gameObject.CompareTag("EarthShatter"))
+        if (collision.gameObject.CompareTag("EarthShatter"))
         {
+              animator.SetTrigger("takeDamage");
             TakeDamage(800);
-        }
-        {
-            if (!isHealing)
-            {
-                HealingPotionZoneEffect();
-            }
+            stopFollowing = true;
+            StartCoroutine(ContinueFollowing());
+            
         }
         if (collision.gameObject.CompareTag("Player"))
         {
             isCollidingWithPlayer = true;
         }
-        else if (collision.gameObject.CompareTag("Nuke") || collision.gameObject.CompareTag("EarthShatter"))
+        else if (collision.gameObject.CompareTag("Nuke") )
         {
             stopFollowing = true;
-            StartCoroutine(continueFollowing());
+            StartCoroutine(ContinueFollowing());
 
             animator.SetTrigger("takeDamage");
 
@@ -379,5 +376,11 @@ public class BossEnemyV1 : MonoBehaviour
     {
         GameObject nukeEffect = Instantiate(nukeVFX, transform.position, transform.rotation);
         Destroy(nukeEffect, 2f);
+    }
+
+    IEnumerator ContinueFollowing()
+    {
+        yield return new WaitForSeconds(1);
+        stopFollowing = false;
     }
 }

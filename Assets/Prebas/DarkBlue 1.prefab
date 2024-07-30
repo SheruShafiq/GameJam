@@ -15437,7 +15437,7 @@ MonoBehaviour:
   deathEffect: {fileID: 5694420188163554479, guid: 2adc3a8f3e139494fb3b03c67a813495,
     type: 3}
   currentStatusEffects: []
-  followSpeed: 10
+  followSpeed: 8
   damage: 50
   separationDistance: 2
   separationForce: 5
