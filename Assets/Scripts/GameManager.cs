@@ -65,14 +65,14 @@ public GameObject gameOverUI;
         {
             Instantiate(BossEnemyV2, GetValidSpawnPosition(enemySpawnRangeX + 50, enemySpawnRangeZ + 50), Quaternion.identity);
         }
-        if (currentLvl >= 5 )
+        if (currentLvl >= 4 )
         {
             for (int i = 0; i < currentLvl - 4; i++)
             {
                 Instantiate(BossEnemyV1, GetValidSpawnPosition(enemySpawnRangeX + 50, enemySpawnRangeZ + 50), Quaternion.identity);
             }
         }
-        if (currentLvl >= 9)
+        if (currentLvl >= 6)
         {
             Instantiate(BossEnemyV3, GetValidSpawnPosition(enemySpawnRangeX + 50, enemySpawnRangeZ + 50), Quaternion.identity);
         }

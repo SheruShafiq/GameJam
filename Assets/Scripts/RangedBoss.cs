@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class BossEnemyV1 : MonoBehaviour
+public class RangedEnemy : MonoBehaviour
 {
     public Animator animator;
     public int maxHP = 500;
@@ -17,21 +17,20 @@ public class BossEnemyV1 : MonoBehaviour
     public int damage = 10;
     public float separationDistance = 2f;
     public float separationForce = 5f;
-    public float stoppingDistance = 2f;
+    public float stoppingDistance = 10f; // Changed to a larger value for ranged attack
     public Transform player;
     private GameManager gameManager;
-    private bool isCollidingWithPlayer = false;
     private Rigidbody rb;
     public GameObject electroVFX;
     public GameObject fireVFX;
     public GameObject nukeVFX;
     private Coroutine electroDamageCoroutine;
     private Coroutine fireDamageCoroutine;
-    private bool isResting = false;
-    private bool stopFollowing = false;
     public HPBar hpBar;
-    private bool isHealing = false;
     private bool isHealthCritical;
+    public GameObject fireballPrefab; // Fireball prefab to instantiate
+    private bool isFiring = false;
+    private bool stopFollowing;
 
     void Start()
     {
@@ -62,7 +61,7 @@ public class BossEnemyV1 : MonoBehaviour
             Debug.LogError("Rigidbody component is not assigned or found in the Boss.");
         }
 
-        StartCoroutine(FollowPlayerCoroutine());
+        StartCoroutine(FollowAndAttackPlayerCoroutine());
     }
 
     void Update()
@@ -77,15 +76,10 @@ public class BossEnemyV1 : MonoBehaviour
             hpBar.UpdateHPDisplay();
         }
 
-        if (isResting)
-        {
-            animator.SetBool("isRunning", false);
-        }
-
-        if (player != null && !gameManager.isPlayerDead && !isResting)
+        if (player != null && !gameManager.isPlayerDead)
         {
             float distance = Vector3.Distance(transform.position, player.position);
-            if (distance > stoppingDistance && !stopFollowing)
+            if (distance > stoppingDistance)
             {
                 animator.SetBool("isRunning", true);
                 FollowPlayer();
@@ -93,13 +87,17 @@ public class BossEnemyV1 : MonoBehaviour
             else
             {
                 animator.SetBool("isRunning", false);
+                if (!isFiring)
+                {
+                    StartCoroutine(FireballCoroutine());
+                }
             }
             ApplySeparation();
         }
 
         if (gameManager.isPlayerDead)
         {
-            PermanentlyRest();
+            animator.SetBool("isRunning", false);
         }
 
         if (currentStatusEffects.Contains("Fire") && currentStatusEffects.Contains("Electro"))
@@ -132,33 +130,40 @@ public class BossEnemyV1 : MonoBehaviour
         }
     }
 
-    IEnumerator FollowPlayerCoroutine()
+    IEnumerator FollowAndAttackPlayerCoroutine()
     {
         while (true)
         {
-            if (isCollidingWithPlayer)
+            if (player != null && !gameManager.isPlayerDead)
             {
-                AttackPlayer();
-                yield return new WaitForSeconds(1);
-                isResting = true;
-                animator.SetBool("isResting", true);
-
-                yield return new WaitForSeconds(3);
-                isResting = false;
-                animator.SetBool("isResting", false);
+                float distance = Vector3.Distance(transform.position, player.position);
+                if (distance <= stoppingDistance && !isFiring)
+                {
+                    StartCoroutine(FireballCoroutine());
+                }
             }
             yield return null;
         }
+    }
+
+    IEnumerator FireballCoroutine()
+    {
+        isFiring = true;
+        while (Vector3.Distance(transform.position, player.position) <= stoppingDistance && !gameManager.isPlayerDead)
+        {
+            animator.SetTrigger("throwFireBall");
+            InstantiateFireball();
+            
+            yield return new WaitForSeconds(1f); // 1 second delay between each fireball
+        }
+        isFiring = false;
     }
 
     private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.CompareTag("HealingPotion"))
         {
-            if (!isHealing)
-            {
-                HealingPotionZoneEffect();
-            }
+            StartHealingPotionZoneEffect();
         }
     }
 
@@ -170,15 +175,13 @@ public class BossEnemyV1 : MonoBehaviour
         }
     }
 
-    private void HealingPotionZoneEffect()
+    private void StartHealingPotionZoneEffect()
     {
-        isHealing = true;
         InvokeRepeating("HealPlayer", 0, 1);
     }
 
     private void StopHealingPotionZoneEffect()
     {
-        isHealing = false;
         CancelInvoke("HealPlayer");
     }
 
@@ -190,6 +193,7 @@ public class BossEnemyV1 : MonoBehaviour
 
     void FollowPlayer()
     {
+        if(!isFiring) {
         float speed = followSpeed;
         Vector3 direction = (new Vector3(player.position.x, transform.position.y, player.position.z) - transform.position).normalized;
         Vector3 newPosition = Vector3.MoveTowards(transform.position, new Vector3(player.position.x, transform.position.y, player.position.z), speed * Time.deltaTime);
@@ -197,24 +201,16 @@ public class BossEnemyV1 : MonoBehaviour
         Vector3 playerFace = (player.position - transform.position).normalized;
         Quaternion lookRotation = Quaternion.LookRotation(playerFace);
         transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * speed);
-    }
-
-    void AttackPlayer()
-    {
-        animator.SetBool("isRunning", false);
-        animator.SetTrigger("attack");
-        var playerController = player.GetComponent<PlayerController>();
-        if (playerController != null && !playerController.currentStatusEffects.Contains("Earth"))
-        {
-            playerController.hpBar.DecreaseHP(damage);
         }
     }
 
-    void PermanentlyRest()
+    void InstantiateFireball()
     {
-        isResting = true;
-        animator.SetBool("isResting", true);
-        StopAllCoroutines();
+        if (fireballPrefab != null)
+        {
+            Vector3 fireballSpawnPosition = transform.position + transform.forward * 2; // Adjust the spawn position as needed
+            Instantiate(fireballPrefab, fireballSpawnPosition, transform.rotation);
+        }
     }
 
     void OnCollisionEnter(Collision collision)
@@ -223,30 +219,16 @@ public class BossEnemyV1 : MonoBehaviour
         {
             animator.SetTrigger("takeDamage");
             TakeDamage(500);
-            stopFollowing = true;
-            StartCoroutine(ContinueFollowing());
         }
         if (collision.gameObject.CompareTag("EarthShatter"))
         {
             animator.SetTrigger("takeDamage");
             TakeDamage(800);
-            stopFollowing = true;
-            StartCoroutine(ContinueFollowing());
-
         }
-        if (collision.gameObject.CompareTag("Player"))
+        if (collision.gameObject.CompareTag("Nuke"))
         {
-            isCollidingWithPlayer = true;
-        }
-        else if (collision.gameObject.CompareTag("Nuke"))
-        {
-            stopFollowing = true;
-            StartCoroutine(ContinueFollowing());
-
             animator.SetTrigger("takeDamage");
-
             TakeDamage(100);
-
             gameManager.TriggerNuke();
         }
         else if (collision.gameObject.CompareTag("QuickAttackProjectile"))
@@ -270,14 +252,6 @@ public class BossEnemyV1 : MonoBehaviour
             }
             currentStatusEffects.Add("Fire");
             fireDamageCoroutine = StartCoroutine(TakeFireDamageFor5Seconds());
-        }
-    }
-
-    void OnCollisionExit(Collision collision)
-    {
-        if (collision.gameObject.CompareTag("Player"))
-        {
-            isCollidingWithPlayer = false;
         }
     }
 
@@ -376,11 +350,5 @@ public class BossEnemyV1 : MonoBehaviour
     {
         GameObject nukeEffect = Instantiate(nukeVFX, transform.position, transform.rotation);
         Destroy(nukeEffect, 2f);
-    }
-
-    IEnumerator ContinueFollowing()
-    {
-        yield return new WaitForSeconds(1);
-        stopFollowing = false;
     }
 }

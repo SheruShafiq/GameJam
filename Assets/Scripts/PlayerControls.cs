@@ -93,7 +93,14 @@ public class PlayerController : MonoBehaviour
             throwPotionTimer.onTimerEnd.AddListener(OnThrowPotionCooldownEnd);
         }
     }
-
+ private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("FireBall") && !currentStatusEffects.Contains("Earth")) 
+        {
+            TakeDamage(10);
+            ApplyFireEffect();
+        }
+    }
     void Update()
     {
         hpBar.UpdateHPDisplay();
@@ -195,19 +202,23 @@ public class PlayerController : MonoBehaviour
 
     void HandleInput()
     {
-        if (Input.GetKeyDown(KeyCode.Q) && !quickAttackCooldown)
-        {
-            PerformQuickAttack();
-        }
+        // if (Input.GetKeyDown(KeyCode.Q) && !quickAttackCooldown)
+        // {
+        //     PerformQuickAttack();
+        // }
 
         if (Input.GetMouseButtonDown(0) && !throwPotionCooldown)
         {
             PerformThrowPotion();
         }
 
-        if (Input.GetMouseButton(1) && !throwPotionCooldown)
-        {
+        if (Input.GetMouseButton(1) && !throwPotionCooldown ) {
+           
             PerformDrinkPotion();
+        }
+        if( Input.GetKeyDown(KeyCode.E)&& !throwPotionCooldown ) {
+             PerformDrinkPotion();
+            
         }
     }
 
@@ -459,7 +470,7 @@ public class PlayerController : MonoBehaviour
 
     void ApplyElectroEffect()
     {
-        if (!currentStatusEffects.Contains("Electro") && !gameManager.isNukeTriggered)
+        if (!currentStatusEffects.Contains("Electro") )
         {
             currentStatusEffects.Add("Electro");
             if (electroDamageCoroutine != null)
@@ -524,7 +535,7 @@ public class PlayerController : MonoBehaviour
 
         while (timer > 0)
         {
-            TakeDamage(1);
+            TakeDamage(5);
             yield return new WaitForSeconds(1);
             timer -= 1f;
         }

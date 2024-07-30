@@ -22984,7 +22984,7 @@ MonoBehaviour:
   BossEnemyV1: {fileID: 2508435949317002660, guid: 562a0dbb3cbe9c74dacb65fb6f4adc5f,
     type: 3}
   BossEnemyV2: {fileID: 100720, guid: ff9818d98699740d08d0d4adbe5a12e6, type: 3}
-  BossEnemyV3: {fileID: 2508435949317002660, guid: 0e1385bcd4c624d7e8520649f722144c,
+  BossEnemyV3: {fileID: 1649258726914647548, guid: 9f480c88c5e9d41ce896223a83fcc912,
     type: 3}
   isPlayerDead: 0
   defaultHud: {fileID: 1412446044}
@@ -22996,12 +22996,12 @@ MonoBehaviour:
   playerTransform: {fileID: 6469071354395968962}
   enemySpawnRangeX: 50
   enemySpawnRangeZ: 50
-  enemyBaseSpawnCount: 8
+  enemyBaseSpawnCount: 10
   potionSpawnRangeX: 50
   potionSpawnRangeZ: 50
   potionBaseSpawnCount: 0
   nukeTriggeredUi: {fileID: 171217970}
-  currentLvl: 5
+  currentLvl: 1
   damageMultiplier: 1
   textMeshProText: {fileID: 1347377154}
   gameOverUI: {fileID: 1176502070}
