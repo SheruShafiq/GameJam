@@ -201,9 +201,9 @@ public class Enemy : MonoBehaviour
     void AttackPlayer()
     {
         var playerController = player.GetComponent<PlayerController>();
-        if (playerController != null)
+        if (playerController != null && !playerController.currentStatusEffects.Contains("Earth"))
         {
-            // playerController.hpBar.DecreaseHP(damagePerSecond);
+            playerController.hpBar.DecreaseHP(damagePerSecond);
         }
         else
         {

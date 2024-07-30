@@ -204,7 +204,7 @@ public class BossEnemyV1 : MonoBehaviour
         animator.SetBool("isRunning", false);
         animator.SetTrigger("attack");
         var playerController = player.GetComponent<PlayerController>();
-        if (playerController != null)
+        if (playerController != null && !playerController.currentStatusEffects.Contains("Earth"))
         {
             playerController.hpBar.DecreaseHP(50);
         }
@@ -221,24 +221,24 @@ public class BossEnemyV1 : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("EarthPotionInflicter"))
         {
-              animator.SetTrigger("takeDamage");
+            animator.SetTrigger("takeDamage");
             TakeDamage(500);
             stopFollowing = true;
             StartCoroutine(ContinueFollowing());
         }
         if (collision.gameObject.CompareTag("EarthShatter"))
         {
-              animator.SetTrigger("takeDamage");
+            animator.SetTrigger("takeDamage");
             TakeDamage(800);
             stopFollowing = true;
             StartCoroutine(ContinueFollowing());
-            
+
         }
         if (collision.gameObject.CompareTag("Player"))
         {
             isCollidingWithPlayer = true;
         }
-        else if (collision.gameObject.CompareTag("Nuke") )
+        else if (collision.gameObject.CompareTag("Nuke"))
         {
             stopFollowing = true;
             StartCoroutine(ContinueFollowing());

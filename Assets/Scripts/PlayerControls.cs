@@ -64,6 +64,7 @@ public class PlayerController : MonoBehaviour
     private bool isInvincible;
 
     private float currentSpeed;
+    public GameObject drinkSfx;
 
     void Start()
     {
@@ -95,8 +96,6 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-       
-        
         hpBar.UpdateHPDisplay();
         if (hpBar.currentHP <= 0)
         {
@@ -370,33 +369,54 @@ public class PlayerController : MonoBehaviour
 
     void PerformDrinkPotion()
     {
-        if (!throwPotionCooldown)
-        {
-            Debug.Log(currentStatusEffects);
-            if (throwableObject == firePotion)
-            {
-                ApplyFireEffect();
-            }
-            else if (throwableObject == electroPotion)
-            {
-                ApplyElectroEffect();
-            }
-            else if (throwableObject == HealingPotionObject)
-            {
-                HealPlayerDrink();
-            }
-            else if (throwableObject == earthPotion)
-            {
-                ApplyEarthEffect();
-            }
 
-            throwPotionCooldown = true;
-            if (throwPotionCooldownCoroutine != null)
-            {
-                StopCoroutine(throwPotionCooldownCoroutine);
-            }
-            throwPotionCooldownCoroutine = StartCoroutine(ThrowPotionCoolDown());
+
+        if (throwableObject == firePotion)
+        {
+            drinkSfx.SetActive(true);
+            ApplyFireEffect();
+            StartCoroutine(resetDrinkSfx());
         }
+        else if (throwableObject == electroPotion)
+        {
+            drinkSfx.SetActive(true);
+            StartCoroutine(resetDrinkSfx());
+
+            ApplyElectroEffect();
+        }
+        else if (throwableObject == HealingPotionObject)
+        {
+            drinkSfx.SetActive(true);
+            StartCoroutine(resetDrinkSfx());
+
+
+            HealPlayerDrink();
+        }
+        else if (throwableObject == earthPotion)
+        {
+            drinkSfx.SetActive(true);
+            StartCoroutine(resetDrinkSfx());
+
+
+            ApplyEarthEffect();
+        }
+
+        throwPotionCooldown = true;
+        if (throwPotionCooldownCoroutine != null)
+        {
+            drinkSfx.SetActive(true);
+            StartCoroutine(resetDrinkSfx());
+
+
+            StopCoroutine(throwPotionCooldownCoroutine);
+        }
+        throwPotionCooldownCoroutine = StartCoroutine(ThrowPotionCoolDown());
+
+    }
+    IEnumerator resetDrinkSfx()
+    {
+        yield return new WaitForSeconds(2);
+        drinkSfx.SetActive(false);
     }
 
     void HealPlayer()
@@ -520,49 +540,49 @@ public class PlayerController : MonoBehaviour
         electroDamageCoroutine = null;
     }
 
- IEnumerator EarthStatusEffect()
-{
-    if (earthStatusEffectCoroutine != null)
+    IEnumerator EarthStatusEffect()
     {
-        StopCoroutine(earthStatusEffectCoroutine);
-    }
-
-    earthStatusIcon.SetActive(true);
-    earthVFX.SetActive(true);
-    isInvincible = true; // Set invincibility
-
-    yield return new WaitForSeconds(2);
-
-    isInvincible = false; // Reset invincibility
-    earthVFX.SetActive(false);
-    currentStatusEffects.Remove("Earth");
-    earthStatusIcon.SetActive(false);
-    earthStatusEffectCoroutine = null;
-
-    replacementObject = earthEffect;
-}
-
-public void TakeDamage(int damage)
-{
-    if (isInvincible) // Check invincibility first
-    {
-        return;
-    }
-
-    if (hpBar != null)
-    {
-        currentStatusEffects.Remove("Earth");
-        earthStatusIcon.SetActive(false);
-        earthVFX.SetActive(false);
         if (earthStatusEffectCoroutine != null)
         {
             StopCoroutine(earthStatusEffectCoroutine);
-            earthStatusEffectCoroutine = null;
         }
-        hpBar.DecreaseHP(damage);
-        hpBar.UpdateHPDisplay();
+
+        earthStatusIcon.SetActive(true);
+        earthVFX.SetActive(true);
+        isInvincible = true;
+
+        yield return new WaitForSeconds(2);
+
+        isInvincible = false;
+        earthVFX.SetActive(false);
+        currentStatusEffects.Remove("Earth");
+        earthStatusIcon.SetActive(false);
+        earthStatusEffectCoroutine = null;
+
+        replacementObject = earthEffect;
     }
-}
+
+    public void TakeDamage(int damage)
+    {
+        if (isInvincible)
+        {
+            return;
+        }
+
+        if (hpBar != null)
+        {
+            currentStatusEffects.Remove("Earth");
+            earthStatusIcon.SetActive(false);
+            earthVFX.SetActive(false);
+            if (earthStatusEffectCoroutine != null)
+            {
+                StopCoroutine(earthStatusEffectCoroutine);
+                earthStatusEffectCoroutine = null;
+            }
+            hpBar.DecreaseHP(damage);
+            hpBar.UpdateHPDisplay();
+        }
+    }
 
     IEnumerator ThrowPotionCoolDown()
     {
@@ -579,14 +599,18 @@ public void TakeDamage(int damage)
             throwPotionTimer.StartTimer();
         }
 
+        Debug.Log("Potion cooldown started");
+
         yield return new WaitForSeconds(cooldownDuration);
 
         throwPotionCooldown = false;
+        Debug.Log("Potion cooldown ended");
     }
 
     void OnThrowPotionCooldownEnd()
     {
         throwPotionCooldown = false;
+        Debug.Log("Potion cooldown ended via timer");
     }
 
     IEnumerator spawnAndThrowObjectCount()
