@@ -222,14 +222,14 @@ public class BossEnemyV1 : MonoBehaviour
         if (collision.gameObject.CompareTag("EarthPotionInflicter"))
         {
             animator.SetTrigger("takeDamage");
-            TakeDamage(500);
+            TakeDamage(300);
             stopFollowing = true;
             StartCoroutine(ContinueFollowing());
         }
         if (collision.gameObject.CompareTag("EarthShatter"))
         {
             animator.SetTrigger("takeDamage");
-            TakeDamage(800);
+            TakeDamage(500);
             stopFollowing = true;
             StartCoroutine(ContinueFollowing());
 

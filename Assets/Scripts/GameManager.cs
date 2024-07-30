@@ -34,6 +34,7 @@ public class GameManager : MonoBehaviour
     private bool isSpawningEnemies = false;
     public int damageMultiplier = 1;
     public TextMeshProUGUI textMeshProText;
+    public GameObject gameMusic;
 public GameObject gameOverUI;
     public GameObject[] tips;
 
@@ -175,6 +176,7 @@ public GameObject gameOverUI;
         // You can add more logic here to handle game over state
         Debug.Log("Game Over");
         gameOverUI.SetActive(true);
+        gameMusic.SetActive(false);
         defaultHud.SetActive(false);
         // Optionally, load a game over scene or show a game over UI
         // SceneManager.LoadScene("GameOverScene");
